@@ -1,0 +1,41 @@
+# ─── Ignorar todo excepto el dashboard ──────────────────────────────────────
+# Estrategia: ignorar todo en la raíz, des-ignorar solo lo que pertenece al
+# dashboard. Así proyectos (twilight/, phpmyadmin/, etc.) quedan fuera.
+
+/*
+
+# ─── Dashboard ────────────────────────────────────────────────────────────
+!index.php
+!.htaccess
+!env-loader.php
+!auth-check.php
+
+# ─── Assets (Bootstrap) ───────────────────────────────────────────────────
+!assets/
+!assets/**
+
+# ─── Lógica del dashboard ─────────────────────────────────────────────────
+!dashboard-logic/
+!dashboard-logic/**
+
+# ─── Documentación ───────────────────────────────────────────────────────
+!README.md
+!CHANGELOG.md
+
+# ─── Template de entorno (sin credenciales reales) ────────────────────────
+!.env.example
+
+# ─── Git ──────────────────────────────────────────────────────────────────
+!.gitignore
+
+# ─── NO trackear el .env real con credenciales ────────────────────────────
+.env
+
+# ─── Basura del sistema ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+
+# ─── Contexto local y opencode ────────────────────────────────────────────
+.context.md
+.atl/
