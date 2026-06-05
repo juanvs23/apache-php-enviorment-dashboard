@@ -8,6 +8,7 @@ Panel de administración centralizado para entornos de desarrollo con múltiples
 - **Listado automático** de proyectos basado en archivos `user-data.txt`
 - **Auto-login a WordPress** — un click sin pasar por `wp-login.php`
 - **Protección de proyectos** — los subdirectorios requieren sesión del dashboard
+- **Card Acciones** con estado de servicios (PostgreSQL, MySQL), acceso rápido (phpinfo, phpMyAdmin, pgAdmin4) y claves configurables desde `.env`
 - Información del servidor (PHP, SO, disco, etc.)
 - Badges por tipo de proyecto (WordPress, Laravel, Symfony, phpMyAdmin, static)
 - Sesión persistente por cookie (7 días)
@@ -52,6 +53,15 @@ EOF
 |----------|-------------|---------|
 | `DASHBOARD_KEY` | Clave de encriptación AES | `$z]7hB92d1pT` |
 | `DASHBOARD_CLAVE` | Contraseña del dashboard | `Sinal14.` |
+| `PMA_URL` | URL personalizada de phpMyAdmin | — |
+| `PGA_EMAIL` | Email de pgAdmin4 | — |
+| `PGA_PASS` | Contraseña de pgAdmin4 | — |
+| `DB_USER` | Usuario de PostgreSQL | — |
+| `DB_PASS` | Contraseña de PostgreSQL | — |
+| `MYSQL_USER` | Usuario de MySQL | — |
+| `MYSQL_PASS` | Contraseña de MySQL | — |
+| `PMA_USER` | Usuario de phpMyAdmin | — |
+| `PMA_PASS` | Contraseña de phpMyAdmin | — |
 
 > **NUNCA** commitees el `.env` real. El repo incluye `.env.example` como template.
 
@@ -91,7 +101,7 @@ Si el archivo está vacío o falta, el proyecto igual aparece (sin badge ni cred
 │       ├── dashboard.php            # Vista autenticada
 │       ├── login.php                # Formulario de login
 │       └── components/
-│           ├── server-info.php      # Info del servidor
+│           ├── server-info.php      # Info del servidor + card Acciones
 │           └── project-card.php     # Tarjeta de proyecto
 ├── README.md
 ├── CHANGELOG.md

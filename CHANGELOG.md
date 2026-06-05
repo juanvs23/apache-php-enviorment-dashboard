@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.0 (2026-06-04)
+
+### Features
+
+- **Card Acciones en dashboard**: nueva sección con estado de servicios (PostgreSQL, MySQL), acceso rápido (phpinfo, phpMyAdmin, pgAdmin4) y claves de acceso configurables desde `.env`
+- **Detección de servicios**: PostgreSQL vía `pg_isready`, MySQL/MariaDB vía `pgrep mysqld`, pgAdmin4 vía HTTP HEAD, phpMyAdmin vía conf de Apache o URL personalizada
+- **Soporte `PMA_URL` en `.env`**: si se define, el botón de phpMyAdmin se activa y apunta a esa URL sin verificación HTTP
+- **Claves de acceso dinámicas**: `PGA_EMAIL`, `PGA_PASS`, `DB_USER`, `DB_PASS`, `MYSQL_USER`, `MYSQL_PASS`, `PMA_USER`, `PMA_PASS` se leen del `.env` y se muestran en el card. Si faltan, muestran "Falta"
+
+### Infraestructura
+
+- **PostgreSQL 18.4** instalado desde apt.postgresql.org, autenticación md5 para local
+- **pgAdmin4 9.15** instalado en `/opt/pgadmin4` (virtualenv system-wide), sirviendo bajo Apache vía mod_wsgi en `/pgadmin4/`
+- Usuario pgAdmin: `admin@localhost.com`, usuario PostgreSQL: `pgadmin` (superuser)
+- Autenticación local de PostgreSQL configurada a md5
+
 ## 1.0.0 (2026-06-04)
 
 ### Features
