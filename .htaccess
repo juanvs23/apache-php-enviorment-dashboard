@@ -4,7 +4,7 @@
 </Files>
 
 # ─── Auth check en TODOS los PHP requests (incluye subdirectorios) ──────────
-php_value auto_prepend_file /mnt/vol/projects/apache/auth-check.php
+php_value auto_prepend_file /mnt/vol/projects/apache/dashboard-logic/auth-check.php
 
 # ─── Proteger dashboard-logic (solo wp-auto-login.php pasa) ────────────────
 <IfModule mod_rewrite.c>

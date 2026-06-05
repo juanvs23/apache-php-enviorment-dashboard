@@ -4,7 +4,7 @@
  * Inicializa sesión, carga variables de entorno y configura constantes.
  */
 session_start();
-require_once __DIR__ . '/../env-loader.php';
+require_once __DIR__ . '/env-loader.php';
 
 // ─── Rate limiting ────────────────────────────────────────────────────────
 define('MAX_LOGIN_ATTEMPTS', 5);
