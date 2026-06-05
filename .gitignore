@@ -21,6 +21,8 @@
 # ─── Documentación ───────────────────────────────────────────────────────
 !README.md
 !CHANGELOG.md
+!docs/
+!docs/**
 
 # ─── Template de entorno (sin credenciales reales) ────────────────────────
 !.env.example

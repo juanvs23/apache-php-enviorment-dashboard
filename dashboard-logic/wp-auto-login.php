@@ -5,7 +5,7 @@
  * Uso: /wp-auto-login.php?project=twilight
  */
 
-require_once __DIR__ . '/../env-loader.php';
+require_once __DIR__ . '/env-loader.php';
 
 // ─── Auth check (misma lógica que index.php) ────────────────────────────────
 $key   = $_ENV['DASHBOARD_KEY'] ?? '$z]7hB92d1pT';

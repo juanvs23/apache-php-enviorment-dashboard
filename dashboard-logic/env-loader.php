@@ -4,7 +4,7 @@
  * Uso: require_once __DIR__ . '/env-loader.php';
  * Luego accedé via $_ENV['DASHBOARD_KEY'], getenv('DASHBOARD_KEY'), etc.
  */
-$env_file = __DIR__ . '/.env';
+$env_file = dirname(__DIR__) . '/.env';
 
 if (!file_exists($env_file)) {
     return;
