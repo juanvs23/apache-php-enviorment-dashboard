@@ -9,6 +9,8 @@
  *   - index.php, dashboard-logic/wp-auto-login.php, assets/
  */
 
+require_once __DIR__ . '/env-loader.php';
+
 $__script = $_SERVER['SCRIPT_NAME'] ?? '';
 
 // ─── Permitir el dashboard y sus assets ─────────────────────────────────
@@ -16,25 +18,32 @@ if (preg_match('#^/(index\.php|dashboard-logic/wp-auto-login\.php|assets/)#', $_
     return;
 }
 
-// ─── Auth ───────────────────────────────────────────────────────────────
-require_once __DIR__ . '/env-loader.php';
+// ─── Auth por cookie + DB ───────────────────────────────────────────────
+$__cookie  = $_COOKIE['project_user'] ?? '';
+$__userID  = $__cookie !== '' ? base64_decode($__cookie, true) : false;
+$__authed  = false;
 
-$__key   = $_ENV['DASHBOARD_KEY'] ?? '$z]7hB92d1pT';
-$__clave = $_ENV['DASHBOARD_CLAVE'] ?? 'Sinal14.';
+if ($__userID !== false && $__userID !== '') {
+    try {
+        $__pdo = new PDO(
+            sprintf(
+                'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+                $_ENV['DB_HOST'] ?? 'localhost',
+                $_ENV['DB_PORT'] ?? '3306',
+                $_ENV['DB_NAME'] ?? 'apache-dashboard'
+            ),
+            $_ENV['DB_USER'] ?? 'juanvs23',
+            $_ENV['DB_PASS'] ?? '',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
 
-function __auth_desencriptar($clave, $texto_encriptado) {
-    $texto_encriptado = base64_decode($texto_encriptado, true);
-    if ($texto_encriptado === false) {
-        return false;
+        $__stmt = $__pdo->prepare('SELECT 1 FROM USERS WHERE userID = :userID LIMIT 1');
+        $__stmt->execute([':userID' => $__userID]);
+        $__authed = (bool) $__stmt->fetchColumn();
+    } catch (Throwable $e) {
+        $__authed = false;
     }
-    $metodo    = 'AES-256-CBC';
-    $iv_length = openssl_cipher_iv_length($metodo);
-    $iv        = substr($texto_encriptado, 0, $iv_length);
-    return openssl_decrypt(substr($texto_encriptado, $iv_length), $metodo, $clave, 0, $iv);
 }
-
-$__cookie    = $_COOKIE['project_user'] ?? '';
-$__authed    = $__cookie !== '' && __auth_desencriptar($__clave, $__cookie) === $__key;
 
 if (!$__authed) {
     header('Location: /index.php?redirect=' . urlencode($__script));

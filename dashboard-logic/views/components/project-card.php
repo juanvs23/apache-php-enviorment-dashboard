@@ -5,32 +5,53 @@
  *   $project  — array con dir, slug, name, badge, has_wp, card_style, user, password
  */
 ?>
-<div class="col-12 col-md-6 col-lg-4 col-xl-3">
-    <div class="card h-100 project-card <?= $project['card_style'] ?>">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0 fw-bolder"><?= $project['name'] ?></h5>
+<div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-3">
+    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px; overflow: hidden;">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom border-secondary"
+             style="background: #23272f; padding: 0.75rem 1rem;">
+            <h5 class="card-title mb-0 fw-bold text-truncate" style="color: #e4e6eb;">
+                <?= htmlspecialchars($project['name']) ?>
+            </h5>
             <?= $project['badge'] ?>
         </div>
-        <div class="card-body">
-            <p class="card-text mb-1">
-                <b>Enlace: </b>
-                <a target="_blank" href="/<?= $project['slug'] ?>" class="text-decoration-none"><?= $project['dir'] ?></a>
+        <div class="card-body" style="padding: 1rem;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="text-muted small">🔗</span>
+                <a target="_blank" href="/<?= $project['slug'] ?>"
+                   class="text-decoration-none small text-truncate"
+                   style="color: #58a6ff;">
+                    <?= htmlspecialchars($project['dir']) ?>
+                </a>
+            </div>
 
-                <?php if ($project['has_wp']): ?>
-                    <br><small class="text-primary">WordPress detectado</small>
+            <?php if ($project['has_wp']): ?>
+                <div class="d-flex align-items-center gap-1 mb-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary small px-2 py-1">
+                        WordPress detectado
+                    </span>
+                </div>
+                <?php if ($project['acept_login']): ?>
+                <div class="d-flex flex-wrap gap-1 mb-2">
                     <a target="_blank" href="/dashboard-logic/wp-auto-login.php?project=<?= urlencode($project['dir']) ?>"
-                       class="btn btn-sm btn-success mt-1">Acceder</a>
+                       class="btn btn-sm btn-success px-3">Acceder</a>
                     <a target="_blank" href="/<?= $project['slug'] ?>/wp-admin/"
-                       class="btn btn-sm btn-outline-primary mt-1">WP Admin</a>
+                       class="btn btn-sm btn-outline-primary px-3">WP Admin</a>
+                </div>
                 <?php endif; ?>
-            </p>
+            <?php endif; ?>
 
             <?php if ($project['user']): ?>
-                <p class="mb-1"><b>Usuario: </b><code><?= $project['user'] ?></code></p>
+                <div class="d-flex align-items-center gap-2 mt-2 pt-2 border-top border-secondary">
+                    <span class="text-muted small">👤</span>
+                    <code class="small" style="color: #e4e6eb;"><?= htmlspecialchars($project['user']) ?></code>
+                </div>
             <?php endif; ?>
 
             <?php if ($project['password']): ?>
-                <p class="mb-0"><b>Contraseña: </b><code><?= $project['password'] ?></code></p>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="text-muted small">🔑</span>
+                    <code class="small" style="color: #e4e6eb;"><?= htmlspecialchars($project['password']) ?></code>
+                </div>
             <?php endif; ?>
         </div>
     </div>

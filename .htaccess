@@ -4,6 +4,8 @@
 </Files>
 
 # ─── Auth check en TODOS los PHP requests (incluye subdirectorios) ──────────
+# ⚠️ IMPORTANTE: al desplegar en otro entorno, actualizá la ruta absoluta
+# para que apunte al directorio raíz del proyecto.
 php_value auto_prepend_file /mnt/vol/projects/apache/dashboard-logic/auth-check.php
 
 # ─── Proteger dashboard-logic (solo wp-auto-login.php pasa) ────────────────

@@ -4,59 +4,138 @@
  * Variables disponibles: ninguna (funciones inline).
  */
 ?>
-<div class="col-12 col-md-6 col-lg-4 col-xl-3">
-    <div class="card h-100 server-card">
-        <div class="card-body">
-            <h6 class="card-title">PHP</h6>
-            <p class="card-text mb-1">Versión: <code><?= phpversion() ?></code></p>
-            <p class="card-text mb-1">Memoria: <code><?= ini_get('memory_limit') ?></code></p>
-            <p class="card-text mb-0">Upload max: <code><?= ini_get('upload_max_filesize') ?></code></p>
+<div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-3">
+    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px;">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="font-size: 1.2rem;">🐘</span>
+                <h6 class="mb-0 fw-bold" style="color: #e4e6eb;">PHP</h6>
+            </div>
+            <div class="small" style="color: #8b949e;">
+                <div class="d-flex justify-content-between py-1">
+                    <span>Versión</span>
+                    <code style="color: #58a6ff;"><?= phpversion() ?></code>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Memoria</span>
+                    <code style="color: #58a6ff;"><?= ini_get('memory_limit') ?></code>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Upload</span>
+                    <code style="color: #58a6ff;"><?= ini_get('upload_max_filesize') ?></code>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-<div class="col-12 col-md-6 col-lg-4 col-xl-3">
-    <div class="card h-100 server-card">
-        <div class="card-body">
-            <h6 class="card-title">Servidor</h6>
-            <p class="card-text mb-1"><code><?= $_SERVER['SERVER_SOFTWARE'] ?? 'N/A' ?></code></p>
-            <p class="card-text mb-1">Document Root: <code><?= $_SERVER['DOCUMENT_ROOT'] ?></code></p>
-            <p class="card-text mb-0"><a target="_blank" href="./phpmyadmin/">phpMyAdmin</a></p>
+<div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-3">
+    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px;">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="font-size: 1.2rem;">🌐</span>
+                <h6 class="mb-0 fw-bold" style="color: #e4e6eb;">Servidor</h6>
+            </div>
+            <div class="small" style="color: #8b949e;">
+                <div class="d-flex justify-content-between py-1">
+                    <span>Software</span>
+                    <code style="color: #58a6ff;"><?= $_SERVER['SERVER_SOFTWARE'] ?? 'N/A' ?></code>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Root</span>
+                    <code class="text-truncate" style="color: #58a6ff; max-width: 140px;"><?= $_SERVER['DOCUMENT_ROOT'] ?></code>
+                </div>
+                <div class="py-1">
+                    <a target="_blank" href="./phpmyadmin/" style="color: #d29922;">📊 phpMyAdmin</a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-<div class="col-12 col-md-6 col-lg-4 col-xl-3">
-    <div class="card h-100 server-card">
-        <div class="card-body">
-            <h6 class="card-title">Sistema operativo</h6>
+<div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-3">
+    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px;">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="font-size: 1.2rem;">💻</span>
+                <h6 class="mb-0 fw-bold" style="color: #e4e6eb;">Sistema</h6>
+            </div>
+            <div class="small" style="color: #8b949e;">
+                <div class="d-flex justify-content-between py-1">
+                    <span>SO</span>
+                    <code style="color: #58a6ff;"><?= get_os() ?></code>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Host</span>
+                    <code style="color: #58a6ff;"><?= php_uname('n') ?></code>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Kernel</span>
+                    <code style="color: #58a6ff;"><?= php_uname('r') ?></code>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Arq</span>
+                    <code style="color: #58a6ff;"><?= php_uname('m') ?></code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-3">
+    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px;">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="font-size: 1.2rem;">💾</span>
+                <h6 class="mb-0 fw-bold" style="color: #e4e6eb;">Disco</h6>
+            </div>
+            <div class="small" style="color: #8b949e;">
+                <?php
+                $free  = disk_free_space('/');
+                $total = disk_total_space('/');
+                $used  = $total - $free;
+                $pct   = $total > 0 ? round($used / $total * 100, 1) : 0;
+                ?>
+                <div class="progress mb-2" style="height: 8px; background: #1a1d23;">
+                    <div class="progress-bar bg-<?= $pct > 80 ? 'danger' : ($pct > 60 ? 'warning' : 'success') ?>"
+                         style="width: <?= $pct ?>%; border-radius: 4px;"></div>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Usado</span>
+                    <code style="color: #58a6ff;"><?= round($used / 1024 / 1024 / 1024, 1) ?> GB</code>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Libre</span>
+                    <code style="color: #58a6ff;"><?= round($free / 1024 / 1024 / 1024, 1) ?> GB</code>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Total</span>
+                    <code style="color: #58a6ff;"><?= round($total / 1024 / 1024 / 1024, 1) ?> GB</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-3">
+    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px;">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="font-size: 1.2rem;">👥</span>
+                <h6 class="mb-0 fw-bold" style="color: #e4e6eb;">Usuarios</h6>
+            </div>
             <p class="card-text mb-0">
-                <b>SO:</b> <?= get_os() ?><br>
-                <b>Host:</b> <?= php_uname('n') ?><br>
-                <b>Kernel:</b> <?= php_uname('r') ?><br>
-                <b>Arquitectura:</b> <?= php_uname('m') ?>
+                <a href="/?users=1" class="btn btn-sm btn-outline-success w-100">Gestionar Usuarios</a>
             </p>
         </div>
     </div>
 </div>
-<div class="col-12 col-md-6 col-lg-4 col-xl-3">
-    <div class="card h-100 server-card">
-        <div class="card-body">
-            <h6 class="card-title">Disco</h6>
-            <p class="card-text mb-0">
-                Libre: <code><?= round(disk_free_space('/') / 1024 / 1024 / 1024, 2) ?> GB</code><br>
-                Total: <code><?= round(disk_total_space('/') / 1024 / 1024 / 1024, 2) ?> GB</code>
-            </p>
-        </div>
-    </div>
-</div>
-<div class="col-12 col-md-6 col-lg-4 col-xl-3">
-    <div class="card h-100 server-card">
-        <div class="card-body">
-            <h6 class="card-title">Acciones</h6>
+<div class="col-12 col-md-6 col-lg-4 col-xl-3 mb-3">
+    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px;">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="font-size: 1.2rem;">⚡</span>
+                <h6 class="mb-0 fw-bold" style="color: #e4e6eb;">Acciones</h6>
+            </div>
 
             <?php
             // ── Detección de servicios ────────────────────────────────
-
-            // pgAdmin4
             $pgadmin_url  = '/pgadmin4/';
             $pgadmin_ok   = false;
             $pgadmin_conf = file_exists('/etc/apache2/conf-enabled/pgadmin4.conf')
@@ -67,20 +146,16 @@
                 $pgadmin_ok = $headers && isset($headers[0]) && str_contains($headers[0], '302');
             }
 
-            // PostgreSQL
             exec('pg_isready -q 2>/dev/null', $_, $exit_pg);
             $pg_alive = $exit_pg === 0;
 
-            // phpMyAdmin
             $pma_url  = '/phpmyadmin/';
             $pma_ok   = false;
             $_pma_env = $_ENV['PMA_URL'] ?? '';
             if ($_pma_env !== '') {
-                // Si el usuario la definió en .env, activamos el botón directo
                 $pma_url = $_pma_env;
                 $pma_ok  = true;
             } else {
-                // Sino, detección automática
                 $_pma_conf = file_exists('/etc/phpmyadmin/apache.conf')
                           || file_exists('/etc/apache2/conf-enabled/phpmyadmin.conf')
                           || file_exists('/etc/apache2/conf-available/phpmyadmin.conf');
@@ -92,7 +167,6 @@
                 }
             }
 
-            // MySQL / MariaDB
             exec('pgrep mysqld 2>/dev/null', $_, $exit_mysql);
             $mysql_alive = $exit_mysql === 0;
 
@@ -113,56 +187,48 @@
             ?>
 
             <!-- ── Estado de servicios ── -->
-            <p class="card-text mb-2 small">
-                <span class="fw-semibold">Estado</span><br>
-                <?php if ($pg_alive): ?>
-                    <span class="badge bg-success me-1">PostgreSQL</span>
-                <?php else: ?>
-                    <span class="badge bg-secondary me-1">PostgreSQL</span>
-                <?php endif; ?>
-                <?php if ($mysql_alive): ?>
-                    <span class="badge bg-success me-1">MySQL</span>
-                <?php else: ?>
-                    <span class="badge bg-secondary me-1">MySQL</span>
-                <?php endif; ?>
-            </p>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+                <span class="badge bg-<?= $pg_alive ? 'success' : 'secondary' ?> bg-opacity-25"
+                      style="color: <?= $pg_alive ? '#3fb950' : '#8b949e' ?>;">
+                    PostgreSQL
+                </span>
+                <span class="badge bg-<?= $mysql_alive ? 'success' : 'secondary' ?> bg-opacity-25"
+                      style="color: <?= $mysql_alive ? '#3fb950' : '#8b949e' ?>;">
+                    MySQL
+                </span>
+            </div>
 
-            <hr class="my-2">
+            <hr class="my-2 border-secondary">
 
             <!-- ── Acceso rápido ── -->
-            <p class="card-text mb-2">
-                <span class="fw-semibold small">Acceso rápido</span><br>
-                <a target="_blank" href="?phpinfo=1" class="btn btn-sm btn-outline-info mt-1">phpinfo()</a>
-
+            <div class="d-flex flex-wrap gap-1 mb-2">
+                <a href="?phpinfo=1" class="btn btn-sm btn-outline-info">phpinfo()</a>
                 <?php if ($pma_ok): ?>
-                    <a target="_blank" href="<?= $pma_url ?>"
-                       class="btn btn-sm btn-outline-warning mt-1">phpMyAdmin</a>
+                    <a target="_blank" href="<?= $pma_url ?>" class="btn btn-sm btn-outline-warning">phpMyAdmin</a>
                 <?php else: ?>
-                    <span class="btn btn-sm btn-outline-secondary mt-1 disabled">phpMyAdmin</span>
+                    <span class="btn btn-sm btn-outline-secondary disabled">phpMyAdmin</span>
                 <?php endif; ?>
-
                 <a target="_blank" href="<?= $pgadmin_url ?>"
-                   class="btn btn-sm mt-1 <?= $pgadmin_ok ? 'btn-outline-success' : 'btn-outline-secondary disabled' ?>">
+                   class="btn btn-sm <?= $pgadmin_ok ? 'btn-outline-success' : 'btn-outline-secondary disabled' ?>">
                     pgAdmin4
                 </a>
-            </p>
+            </div>
 
-            <hr class="my-2">
+            <hr class="my-2 border-secondary">
+
             <!-- ── Claves de acceso ── -->
-            <div class="card-text small">
-                <span class="fw-semibold">Claves de acceso</span>
-                <dl class="row small text-muted mb-0 mt-1" style="column-gap: 0.25rem;">
-                    <?php foreach ($_claves as $_servicio => $_credencial): ?>
-                        <dt class="col-4 text-truncate"><?= $_servicio ?></dt>
-                        <dd class="col-8 mb-0 text-truncate">
-                            <?php if ($_credencial): ?>
-                                <code><?= htmlspecialchars($_credencial) ?></code>
-                            <?php else: ?>
-                                <span class="fst-italic text-warning-emphasis">Falta</span>
-                            <?php endif; ?>
-                        </dd>
-                    <?php endforeach; ?>
-                </dl>
+            <div class="small" style="color: #8b949e;">
+                <span class="fw-semibold small" style="color: #e4e6eb;">Claves de acceso</span>
+                <?php foreach ($_claves as $_servicio => $_credencial): ?>
+                    <div class="d-flex justify-content-between py-1">
+                        <span><?= $_servicio ?></span>
+                        <?php if ($_credencial): ?>
+                            <code class="small" style="color: #58a6ff;"><?= htmlspecialchars($_credencial) ?></code>
+                        <?php else: ?>
+                            <span class="fst-italic" style="color: #d29922;">Falta</span>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>

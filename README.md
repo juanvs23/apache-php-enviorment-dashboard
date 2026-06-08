@@ -35,7 +35,12 @@ cp .env.example .env
 # 3. Verificar que Apache tenga AllowOverride All
 # para el DocumentRoot (ya incluido en el repo)
 
-# 4. Agregar proyectos
+# 4. ⚠️ Actualizar ruta absoluta en .htaccess
+# Editar .htaccess y cambiar:
+#   php_value auto_prepend_file /ruta/actual/dashboard-logic/auth-check.php
+# por la ruta real del proyecto en tu servidor.
+
+# 5. Agregar proyectos
 # Cada subdirectorio con un archivo user-data.txt:
 mkdir -p mi-proyecto
 cat > mi-proyecto/user-data.txt <<EOF

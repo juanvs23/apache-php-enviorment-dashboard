@@ -1,0 +1,17 @@
+{
+    "name": "apache/dashboard",
+    "description": "Apache Server Dashboard",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Dashboard\\": ""
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "scripts": {
+        "test": "phpunit --bootstrap Tests/bootstrap.php Tests/",
+        "test-coverage": "phpunit --bootstrap Tests/bootstrap.php --coverage-html Tests/coverage Tests/"
+    }
+}
