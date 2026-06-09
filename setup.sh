@@ -151,6 +151,13 @@ esac
 # ══════════════════════════════════════════════════════════════════════
 step "2. Activando módulos de Apache"
 
+# Verificar que Apache esté instalado
+if ! command -v apache2ctl &>/dev/null && ! command -v apachectl &>/dev/null && ! command -v httpd &>/dev/null; then
+    err "Apache no está instalado. El paso 1 debería haberlo instalado."
+    err "Instalalo manualmente y volvé a correr el script."
+    exit 1
+fi
+
 case "$PKG" in
     apt)
         # Redetectar versión PHP por si se instaló recién
