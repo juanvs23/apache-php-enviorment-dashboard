@@ -103,13 +103,30 @@ case "$PKG" in
         sudo apt-get update -qq 2>/dev/null
         explain "Repositorios actualizados."
 
-        # Paquete base
-        PKGS="apache2 mysql-server mysql-client"
-        PHP_CORE="php${PHP_VER} libapache2-mod-php${PHP_VER}"
+        # Detectar MariaDB antes de instalar MySQL
+        MARIADB_SKIP=false
+        if dpkg -l mariadb-server 2>/dev/null | grep -q '^ii'; then
+            if ss -tlnp 2>/dev/null | grep -q ':3306'; then
+                warn "MariaDB detectado en puerto 3306 — salteando instalación de MySQL"
+                explain "Tu MariaDB es 100% compatible con el dashboard."
+                MARIADB_SKIP=true
+            fi
+        elif dpkg -l mysql-server 2>/dev/null | grep -q '^ii'; then
+            info "MySQL ya instalado"
+            MARIADB_SKIP=true
+        fi
 
-        explain "Instalando Apache y MySQL..."
-        sudo apt-get install -y -qq apache2 mysql-server mysql-client 2>/dev/null
-        info "Apache + MySQL instalados"
+        # Instalar Apache
+        explain "Instalando Apache..."
+        sudo apt-get install -y -qq apache2 2>/dev/null
+        info "Apache instalado"
+
+        # Instalar MySQL solo si no hay MariaDB
+        if [[ "$MARIADB_SKIP" == "false" ]]; then
+            explain "Instalando MySQL..."
+            sudo apt-get install -y -qq mysql-server mysql-client 2>/dev/null
+            info "MySQL instalado"
+        fi
 
         explain "Instalando PHP $PHP_VER y su módulo para Apache..."
         sudo apt-get install -y -qq $PHP_CORE 2>/dev/null
