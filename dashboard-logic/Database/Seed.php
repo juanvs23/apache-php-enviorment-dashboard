@@ -31,9 +31,9 @@ final class Seed
             return;
         }
 
-        // ── User: admin@admin / Sinal14. ────────────────────────────────
+        // ── User: admin@admin / Admin123 ─────────────────────────────────
         $email = 'admin@admin';
-        $pass  = password_hash('Sinal14.', PASSWORD_BCRYPT);
+        $pass  = password_hash('Admin123', PASSWORD_BCRYPT);
 
         $pdo->prepare("
             INSERT IGNORE INTO USERS (userID, email, name, pass, level)
@@ -46,6 +46,6 @@ final class Seed
 
         echo "Seed complete:\n";
         echo "  - Level 'admin' (type 0) created\n";
-        echo "  - User 'admin@admin' / 'Sinal14.' created\n";
+        echo "  - User 'admin@admin' / 'Admin123' created\n";
     }
 }

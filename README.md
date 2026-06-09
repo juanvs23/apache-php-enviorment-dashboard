@@ -116,8 +116,12 @@ Esto crea:
 
 | Usuario | Email | Contraseña | Nivel |
 |---------|-------|------------|-------|
-| Admin | `admin@admin` | `Sinal14.` | admin |
+| Admin | `admin@admin` | `Admin123` | admin |
 | Cliente | `cliente@test.com` | `cliente123` | client |
+
+> ⚠️ **Cambiá la contraseña de `admin@admin` después del primer login.**
+> Creá tu propio usuario admin desde el dashboard (Usuarios → Crear Usuario)
+> y luego eliminá o cambiá la clave del usuario por defecto.
 
 ### Agregar proyectos
 
