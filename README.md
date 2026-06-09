@@ -87,6 +87,45 @@ cd /ruta/al/document-root
 
 El script instala TODO lo necesario: Apache, PHP 8.0+, MySQL, extensiones, módulos, crea la base de datos, configura `.env`, actualiza `.htaccess` y siembra los datos iniciales.
 
+#### ¿Qué hace `setup.sh` paso a paso?
+
+| Paso | Acción |
+|:---:|---|
+| 1 | Detecta la distro (Ubuntu, Debian, Fedora, etc.) y el package manager (`apt`, `dnf`, etc.) |
+| 2 | Si no hay PHP 8.0+, lo instala junto con Apache, MySQL y todas las extensiones |
+| 3 | Activa `mod_rewrite` y `mod_php` en Apache |
+| 4 | Verifica una a una las 12 extensiones PHP necesarias |
+| 5 | Crea `.env` pidiéndote las credenciales de MySQL de forma interactiva |
+| 6 | Crea la base de datos y el usuario MySQL (si no es root) |
+| 7 | Actualiza el `.htaccess` con la ruta absoluta real de `auth-check.php` |
+| 8 | Ejecuta `seed.php` (crea usuario admin por defecto) |
+| 9 | Configura el VirtualHost de Apache (`DocumentRoot` + `AllowOverride All`) |
+| 10 | Reinicia Apache y muestra el resumen final |
+
+#### Significado de los íconos
+
+| Ícono | Significado |
+|:---:|---|
+| `[✓]` | Todo OK — el paso se completó o ya estaba listo |
+| `[!]` | Advertencia — algo falta y el script lo está instalando/configurando |
+| `[✗]` | Error — algo falló y necesita intervención manual |
+
+Si al finalizar ves `✅ Dashboard instalado`, todo salió bien. Si hay `[✗]`,
+leé la sección de troubleshooting abajo.
+
+#### Troubleshooting de `setup.sh`
+
+| Problema | Causa probable | Solución |
+|----------|---------------|----------|
+| `[✗] Apache no está instalado` | El paso 1 falló o se salteó | Instalar manualmente: `sudo apt install apache2` |
+| `[✗] Extensión pdo_mysql no encontrada` | Falta `php8.x-mysql` | `sudo apt install php8.3-mysql` |
+| `[!] Activando mod_rewrite...` y no aparece `[✓]` | `a2enmod` falló | `sudo a2enmod rewrite && sudo systemctl restart apache2` |
+| Error `could not find driver` | PDO MySQL no cargado | Descomentar `extension=pdo_mysql` en `php.ini` |
+| Error 500 en el dashboard | `.htaccess` o `auto_prepend_file` mal | Verificar ruta en `.htaccess`: debe ser absoluta |
+| `sudo: a terminal is required` | sudo pide contraseña y no hay terminal | Ejecutar con `sudo -S` o configurar NOPASSWD |
+| No se conecta a MySQL | Credenciales incorrectas o MySQL no iniciado | `sudo systemctl start mysql` y verificar `.env` |
+| Apache no carga después del script | Conflicto de puertos | `sudo netstat -tlnp \| grep :80` |
+
 ¿Estás en macOS, Windows o una distro no soportada? Leé [`SETUP.md`](SETUP.md) — una guía paso a paso diseñada para que vos (o una IA) puedan instalar el dashboard manualmente en cualquier sistema.
 
 ### Manual
