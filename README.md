@@ -19,11 +19,27 @@ Panel de administración centralizado para entornos de desarrollo con múltiples
 
 | Requisito | Versión | Notas |
 |-----------|---------|-------|
-| Apache | 2.4+ | Con `mod_rewrite` |
+| Apache | 2.4+ | Con **mod_php** (NO PHP-FPM) y `mod_rewrite` |
 | PHP | 8.0+ | |
 | MySQL | 8.0+ | Puerto 3306 por defecto |
 | Composer | 2.x | Solo para dev (PHPUnit) |
 | Bootstrap | 5.x | Incluido en `assets/` |
+
+> ⚠️ **Importante**: el `.htaccess` usa `php_value auto_prepend_file`. Esta directiva
+> **solo funciona con `mod_php`** (Apache + PHP como módulo). Si usás PHP-FPM, el
+> `auto_prepend_file` debe configurarse en el VirtualHost con `php_admin_value`.
+
+**Configuración mínima de Apache para el VirtualHost:**
+
+```apache
+<VirtualHost *:80>
+    DocumentRoot /ruta/al/proyecto
+    <Directory /ruta/al/proyecto>
+        AllowOverride All     # Necesario para que .htaccess funcione
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
 
 **Extensiones PHP requeridas:**
 
