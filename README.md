@@ -24,6 +24,23 @@ Panel de administración centralizado para entornos de **desarrollo y staging** 
 
 ## Requisitos
 
+### Distros soportadas
+
+El script `setup.sh` instala automáticamente todo lo necesario en:
+
+| Distro | Package Manager | Soporte |
+|--------|:---:|:---:|
+| **Ubuntu** (22.04 / 24.04 LTS) | `apt` | ✅ Completo |
+| **Debian** (12+) | `apt` | ✅ Completo |
+| **RHEL / Rocky Linux / AlmaLinux** (9+) | `dnf` | ✅ Requiere repo Remi |
+| **Fedora** (40+) | `dnf` | ✅ Completo |
+| **openSUSE** (Tumbleweed) | `zypper` | ✅ Completo |
+| **Arch Linux** | `pacman` | ✅ Completo |
+
+> **No soportado:** Alpine Linux (usa `musl` en vez de `glibc` y `apk` en vez del package manager tradicional). No es un target común en VPS de hosting web.
+
+### Versiones de software
+
 | Requisito | Versión | Notas |
 |-----------|---------|-------|
 | Apache | 2.4+ | Con **mod_php** (NO PHP-FPM) y `mod_rewrite` |
@@ -68,7 +85,9 @@ cd /ruta/al/document-root
 ./setup.sh
 ```
 
-El script instala TODO lo necesario: Apache, PHP 8.3, MySQL, extensiones, módulos, crea la base de datos, configura `.env`, actualiza `.htaccess` y siembra los datos iniciales.
+El script instala TODO lo necesario: Apache, PHP 8.0+, MySQL, extensiones, módulos, crea la base de datos, configura `.env`, actualiza `.htaccess` y siembra los datos iniciales.
+
+¿Estás en macOS, Windows o una distro no soportada? Leé [`SETUP.md`](SETUP.md) — una guía paso a paso diseñada para que vos (o una IA) puedan instalar el dashboard manualmente en cualquier sistema.
 
 ### Manual
 
