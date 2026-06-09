@@ -85,7 +85,9 @@ cd /ruta/al/document-root
 ./setup.sh
 ```
 
-El script instala TODO lo necesario: Apache, PHP 8.3, MySQL, extensiones, módulos, crea la base de datos, configura `.env`, actualiza `.htaccess` y siembra los datos iniciales.
+El script instala TODO lo necesario: Apache, PHP 8.0+, MySQL, extensiones, módulos, crea la base de datos, configura `.env`, actualiza `.htaccess` y siembra los datos iniciales.
+
+¿Estás en macOS, Windows o una distro no soportada? Leé [`SETUP.md`](SETUP.md) — una guía paso a paso diseñada para que vos (o una IA) puedan instalar el dashboard manualmente en cualquier sistema.
 
 ### Manual
 
