@@ -56,17 +56,106 @@ brew services start mysql
 
 ### Windows
 
-**Opción A — XAMPP (recomendado para desarrollo local):**
+**Al iniciar, preguntá al usuario qué método prefiere:**
+
+> "Para Windows tenés 4 opciones. ¿Cuál preferís?
+> **A)** XAMPP (más fácil, 1 click)
+> **B)** Laragon (moderno, portable, más rápido)
+> **C)** WSL2 + Ubuntu (entorno Linux real dentro de Windows)
+> **D)** Instalación nativa (Apache + PHP + MySQL por separado, control total)"
+
+#### Opción A — XAMPP
 
 1. Descargar XAMPP desde https://www.apachefriends.org/
 2. Instalar con Apache, MySQL y PHP
-3. El DocumentRoot será `C:\xampp\htdocs\`
-4. `mod_php` ya viene activado
+3. DocumentRoot: `C:\xampp\htdocs\`
+4. `mod_php` y `mod_rewrite` ya vienen activados
 
-**Opción B — WSL2 con Ubuntu:**
+```powershell
+# Clonar el proyecto
+cd C:\xampp\htdocs
+git clone https://github.com/juanvs23/apache-php-enviorment-dashboard.git dashboard
+```
 
-1. Activar WSL2 y instalar Ubuntu desde la Microsoft Store
-2. Seguir las instrucciones de Ubuntu más abajo
+#### Opción B — Laragon
+
+1. Descargar Laragon desde https://laragon.org/download/
+2. Instalar (modo Full: Apache + MySQL + PHP)
+3. DocumentRoot: `C:\laragon\www\`
+4. Panel de control → Menú contextual → `PHP > Extensions` para activar extensiones
+
+```powershell
+cd C:\laragon\www
+git clone https://github.com/juanvs23/apache-php-enviorment-dashboard.git dashboard
+```
+
+Ventajas sobre XAMPP: portable (USB), más rápido, terminal integrada (Cmder), SSL automático.
+
+#### Opción C — WSL2 + Ubuntu
+
+```powershell
+# En PowerShell (Admin)
+wsl --install -d Ubuntu
+```
+
+Después de reiniciar, abrir la terminal de Ubuntu y seguir las instrucciones de Linux (apt).
+
+```bash
+cd /mnt/c/Users/TuUsuario/www   # o donde prefieras
+git clone https://github.com/juanvs23/apache-php-enviorment-dashboard.git dashboard
+cd dashboard
+./setup.sh
+```
+
+Ventajas: entorno idéntico a producción (Linux real).
+
+#### Opción D — Instalación nativa (Apache + PHP + MySQL por separado)
+
+**Apache (Apache Lounge):**
+
+1. Descargar `httpd-2.4.x-win64-VS17.zip` desde https://www.apachelounge.com/download/
+2. Extraer a `C:\Apache24`
+3. Editar `C:\Apache24\conf\httpd.conf`:
+   - Cambiar `ServerRoot` a `"C:/Apache24"`
+   - Cambiar `DocumentRoot` a `"C:/www"`
+   - Agregar al final:
+     ```apache
+     LoadModule php_module "C:/php/php8apache2_4.dll"
+     AddHandler application/x-httpd-php .php
+     PHPIniDir "C:/php"
+     ```
+   - Descomentar `LoadModule rewrite_module modules/mod_rewrite.so`
+   - Cambiar `AllowOverride None` → `AllowOverride All` en `<Directory "C:/www">`
+4. Instalar como servicio: `C:\Apache24\bin\httpd.exe -k install`
+
+**PHP:**
+
+1. Descargar `PHP 8.3.x (Thread Safe)` ZIP desde https://windows.php.net/download/
+2. Extraer a `C:\php`
+3. Copiar `php.ini-production` → `php.ini`
+4. Descomentar extensiones: `extension=php_pdo_mysql.dll`, `extension=php_mbstring.dll`, 
+   `extension=php_openssl.dll`, `extension=php_gd.dll`, `extension=php_curl.dll`,
+   `extension=php_zip.dll`, `extension=php_intl.dll`, `extension=php_fileinfo.dll`
+5. Agregar `C:\php` al PATH del sistema
+
+**MySQL:**
+
+1. Descargar MySQL Installer desde https://dev.mysql.com/downloads/installer/
+2. Instalar "Server only"
+3. Elegir puerto 3306, autenticación `mysql_native_password`, setear clave root
+
+**Clonar y configurar:**
+
+```powershell
+mkdir C:\www
+cd C:\www
+git clone https://github.com/juanvs23/apache-php-enviorment-dashboard.git .
+
+# Editar .htaccess — cambiar la ruta absoluta:
+# php_value auto_prepend_file C:/www/dashboard-logic/auth-check.php
+```
+
+Crear directorios de proyecto como subcarpetas de `C:\www` (ej: `C:\www\twilight\`).
 
 ### Linux de nicho (Void, Gentoo, Slackware, NixOS, etc.)
 
@@ -167,6 +256,8 @@ Agregar al archivo de configuración de Apache:
 | RHEL/Fedora | `/etc/httpd/conf.d/000-default.conf` |
 | macOS (Homebrew) | `/usr/local/etc/httpd/httpd.conf` |
 | Windows (XAMPP) | `C:\xampp\apache\conf\extra\httpd-vhosts.conf` |
+| Windows (Laragon) | `C:\laragon\bin\apache\httpd-*\conf\extra\httpd-vhosts.conf` |
+| Windows (nativo) | `C:\Apache24\conf\httpd.conf` |
 
 Después de editar, reiniciar Apache:
 
@@ -177,8 +268,11 @@ sudo systemctl restart apache2   # o httpd
 # macOS
 brew services restart httpd
 
-# Windows (XAMPP)
-# Usar el panel de control de XAMPP → Stop / Start Apache
+# Windows (XAMPP/Laragon)
+# Usar el panel de control → Stop / Start Apache
+
+# Windows (nativo)
+# C:\Apache24\bin\httpd.exe -k restart
 ```
 
 ### 3.6 Activar mod_rewrite
@@ -191,7 +285,9 @@ sudo a2enmod rewrite
 # macOS (Homebrew) — editar httpd.conf, descomentar:
 #   LoadModule rewrite_module lib/httpd/modules/mod_rewrite.so
 
-# Windows (XAMPP) — editar C:\xampp\apache\conf\httpd.conf, descomentar:
+# Windows
+# XAMPP / Laragon: ya viene activado
+# Nativo: editar C:\Apache24\conf\httpd.conf, descomentar:
 #   LoadModule rewrite_module modules/mod_rewrite.so
 ```
 
@@ -225,13 +321,19 @@ http://localhost
 | `php_value` no funciona | Asegurate de usar **mod_php** (`brew services start php`), no PHP-FPM |
 | Puerto 80 requiere root | Ejecutar `sudo brew services start httpd` o usar puerto 8080 |
 
-### Windows (XAMPP)
+### Windows
 
-| Problema | Solución |
-|----------|----------|
-| XAMPP no encuentra el proyecto | Mover el proyecto a `C:\xampp\htdocs\` |
-| `auto_prepend_file` con espacios en ruta | Usar forward slashes: `C:/xampp/htdocs/mi-proyecto/...` |
-| Puerto 80 ocupado (Skype, IIS) | Cambiar puerto de Apache en XAMPP Control Panel → Config |
+| Método | Problema | Solución |
+|--------|----------|----------|
+| XAMPP | No encuentra el proyecto | Mover a `C:\xampp\htdocs\` |
+| XAMPP | Puerto 80 ocupado (Skype, IIS) | XAMPP Control Panel → Config → cambiar puerto |
+| Laragon | Extensión no disponible | Click derecho en Laragon → PHP → Extensions |
+| Laragon | MySQL no inicia | Laragon → Menú → MySQL → Change port |
+| WSL2 | `setup.sh` no encuentra Apache | Ejecutar `sudo apt update && sudo apt install apache2` primero |
+| WSL2 | Proyecto no accesible desde Windows | Usar `localhost`, WSL2 comparte la red |
+| Nativo | `php8apache2_4.dll` no encontrado | Verificar que PHP sea Thread Safe y la ruta en httpd.conf use `/` no `\` |
+| Nativo | Apache no inicia como servicio | Ejecutar como Admin: `C:\Apache24\bin\httpd.exe -k install` |
+| Todos | `auto_prepend_file` con espacios en ruta | Usar forward slashes: `C:/xampp/htdocs/dashboard/...` |
 
 ### Linux de nicho
 
