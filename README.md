@@ -1,9 +1,9 @@
 # Dev Dashboard
 
-Panel de administración centralizado para entornos de **desarrollo** con múltiples proyectos PHP (WordPress, Laravel, etc.).
+Panel de administración centralizado para entornos de **desarrollo y staging** con múltiples proyectos PHP (WordPress, Laravel, etc.).
 
-> ⚠️ **Solo para desarrollo local.** Este sistema no está diseñado para producción.
-> Expone credenciales, no tiene protección CSRF, y confía en el entorno de red local.
+> ⚠️ **Solo para entornos de desarrollo y staging.** Este sistema no está diseñado
+> para producción. Expone credenciales, carece de CSRF y confía en la red local/privada.
 
 > ⚠️ **Requiere Apache con mod_php.** No funciona con nginx ni PHP-FPM.
 > El sistema depende de `php_value auto_prepend_file` en `.htaccess` y de
