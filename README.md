@@ -128,7 +128,15 @@ Luego desde el dashboard > Usuarios > Proyectos, creá el proyecto en la DB y as
 
 ### Estructura de la base de datos
 
-El sistema hace auto-migrate al conectar. Tablas creadas:
+El sistema usa **auto-migrate**: al conectar por primera vez a MySQL, `Connection::get()` llama a `Migration::apply()`, que ejecuta los `CREATE TABLE IF NOT EXISTS`. Si las tablas ya existen, no las toca.
+
+Esto significa que:
+
+- **No necesitás correr migraciones manualmente** — al abrir el dashboard se crea todo solo
+- **Si agregás una columna nueva** a `Migration.php`, como la tabla ya existe, `IF NOT EXISTS` no la crea — en ese caso ejecutá un `ALTER TABLE` manual o recreá la DB
+- **`seed.php`** solo se corre una vez para poblar datos iniciales (usuarios admin y cliente)
+
+**Tablas creadas:**
 
 ```
 levels          — niveles de usuario (admin, client, etc.)
