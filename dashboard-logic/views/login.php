@@ -30,9 +30,15 @@
                             <input type="hidden" name="redirect" value="<?= htmlspecialchars($redirect_param) ?>">
                         <?php endif; ?>
 
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="floatingEmail"
+                                   name="email" placeholder="Email" required autocomplete="email" autofocus>
+                            <label for="floatingEmail">Email</label>
+                        </div>
+
                         <div class="form-floating mb-3 position-relative">
                             <input type="password" class="form-control" id="floatingPassword"
-                                   name="password" placeholder="Contraseña" required>
+                                   name="password" placeholder="Contraseña" required autocomplete="current-password">
                             <label for="floatingPassword">Contraseña</label>
                             <button type="button"
                                     class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"

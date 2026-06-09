@@ -46,7 +46,7 @@ if (!$authenticated && is_login_attempt()) {
     }
 }
 
-// Refrescar cookie de sesión si ya está autenticado
+// Refrescar cookie si ya está autenticado
 if ($authenticated) {
     refresh_auth_cookie();
 }
@@ -58,10 +58,49 @@ if ($authenticated) {
     <title>Dev Dashboard — <?= gethostname() ?></title>
     <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; }
-        .server-card { min-height: 100px; }
-        .project-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,.15); transition: .2s; }
-        .logout-link { position: absolute; top: 1rem; right: 1.5rem; z-index: 10; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1d23;
+            color: #e4e6eb;
+        }
+        .card {
+            transition: box-shadow .25s ease;
+        }
+        .card:hover {
+            box-shadow: 1px 3px 6px rgba(0,0,0,.5) !important;
+        }
+        .nav-tabs .nav-link {
+            color: #8b949e;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+        }
+        .nav-tabs .nav-link:hover {
+            color: #e4e6eb;
+            border: none;
+            background: rgba(255,255,255,.05);
+        }
+        .nav-tabs .nav-link.active {
+            color: #fff;
+            background: transparent;
+            border-bottom: 2px solid #58a6ff;
+        }
+        .nav-tabs {
+            border-bottom: 1px solid #30363d;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1d23;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
     </style>
 </head>
 <body>
@@ -70,9 +109,65 @@ if ($authenticated) {
 
     <?php if (isset($_GET['phpinfo'])): ?>
         <?php phpinfo(); ?>
+    <?php elseif (isset($_GET['users'])): ?>
+        <?php
+        require_once __DIR__ . '/dashboard-logic/user-management.php';
+        $msg      = '';
+        $msg_type = 'success';
+        $result   = process_user_action();
+        if ($result) {
+            $msg      = $result['error'] ?? 'Operación exitosa';
+            $msg_type = $result['success'] ? 'success' : 'danger';
+        }
+        $users        = get_all_users();
+        $levels       = get_all_levels();
+        $projects     = get_all_projects();
+        $client_users = get_client_users();
+        $tab          = $_GET['tab'] ?? 'usuarios';
+        require __DIR__ . '/dashboard-logic/views/user-management.php';
+        ?>
     <?php else: ?>
         <?php
         $projects     = list_projects();
+        $auth_user    = get_auth_user();
+
+        // Enriquecer proyectos con acept_login desde la DB
+        try {
+            $pdo = \Dashboard\Database\Connection::get();
+            $dbProjects = $pdo->query('SELECT project_name, acept_login FROM Project')->fetchAll(\PDO::FETCH_ASSOC);
+            $acceptMap = [];
+            foreach ($dbProjects as $dbp) {
+                $acceptMap[strtolower(trim($dbp['project_name']))] = (int) $dbp['acept_login'];
+            }
+            foreach ($projects as &$p) {
+                $p['acept_login'] = $acceptMap[strtolower($p['dir'])] ?? 0;
+            }
+            unset($p);
+
+            // Admin ve TODOS los botones siempre
+            if ($auth_user && $auth_user['level_type'] === 0) {
+                foreach ($projects as &$p) {
+                    $p['acept_login'] = 1;
+                }
+                unset($p);
+            }
+        } catch (\Throwable $e) {
+            // Si falla la DB, asumir 0
+        }
+
+        if ($auth_user && $auth_user['level_type'] === 1) {
+            $allowed = [];
+            try {
+                $stmt = $pdo->prepare('SELECT project_name FROM Project WHERE user_own = :uid');
+                $stmt->execute([':uid' => $auth_user['userID']]);
+                $allowed = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+            } catch (\Throwable $e) {
+                $allowed = [];
+            }
+            $projects = array_values(array_filter($projects, fn($p) =>
+                in_array(strtolower($p['dir']), array_map('strtolower', $allowed))
+            ));
+        }
         $has_projects = !empty($projects);
         require __DIR__ . '/dashboard-logic/views/dashboard.php';
         ?>

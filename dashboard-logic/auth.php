@@ -1,46 +1,96 @@
 <?php
 /**
- * Autenticación del dashboard.
+ * Autenticación del dashboard con MySQL.
  *
- * Responsabilidad única: verificar credenciales, manejar cookies de sesión,
- * login y logout.
+ * Responsabilidad única: verificar credenciales contra la tabla USERS,
+ * mantener cookie con UUID, lookup en cada request.
  */
 
-function get_auth_key(): string {
-    return $_ENV['DASHBOARD_KEY'] ?? '$z]7hB92d1pT';
-}
+use Dashboard\Database\Connection;
 
-function get_auth_clave(): string {
-    return $_ENV['DASHBOARD_CLAVE'] ?? 'Sinal14.';
+function get_auth_user(): ?array {
+    $cookie = $_COOKIE['project_user'] ?? '';
+    if ($cookie === '') {
+        return null;
+    }
+
+    $userID = base64_decode($cookie, true);
+    if ($userID === false || $userID === '') {
+        return null;
+    }
+
+    try {
+        $pdo  = Connection::get();
+        $stmt = $pdo->prepare('
+            SELECT u.userID, u.email, u.name, u.level, l.level_name, l.level_type
+            FROM USERS u
+            JOIN levels l ON l.levelsID = u.level
+            WHERE u.userID = :userID
+            LIMIT 1
+        ');
+        $stmt->execute([':userID' => $userID]);
+        $user = $stmt->fetch();
+    } catch (Throwable $e) {
+        return null;
+    }
+
+    if (!$user) {
+        return null;
+    }
+
+    return [
+        'userID'     => $user['userID'],
+        'email'      => $user['email'],
+        'name'       => $user['name'],
+        'level'      => $user['level'],
+        'level_name' => $user['level_name'],
+        'level_type' => (int) $user['level_type'],
+    ];
 }
 
 function check_auth(): bool {
-    $cookie = $_COOKIE['project_user'] ?? '';
-    if ($cookie === '') {
-        return false;
-    }
-
-    return desencriptar(get_auth_clave(), $cookie) === get_auth_key();
+    return get_auth_user() !== null;
 }
 
 function is_login_attempt(): bool {
-    return ($_POST['password'] ?? '') !== '';
+    return ($_POST['email'] ?? '') !== '' && ($_POST['password'] ?? '') !== '';
 }
 
 function attempt_login(): array {
-    $key             = get_auth_key();
-    $clave           = get_auth_clave();
-    $password        = $_POST['password'] ?? '';
-    $password_encript = encriptar($clave, $key);
+    $email    = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    if (desencriptar($password, $password_encript) === $key) {
-        setcookie('project_user', $password_encript, time() + COOKIE_EXPIRY, COOKIE_PATH);
-        reset_attempts();
-        return ['success' => true];
+    if ($email === '' || $password === '') {
+        increment_attempts();
+        return ['success' => false, 'error' => 'Email y contraseña requeridos'];
     }
 
-    increment_attempts();
-    return ['success' => false, 'error' => 'La contraseña es incorrecta'];
+    try {
+        $pdo  = Connection::get();
+        $stmt = $pdo->prepare('
+            SELECT u.userID, u.email, u.name, u.pass, u.level, l.level_name, l.level_type
+            FROM USERS u
+            JOIN levels l ON l.levelsID = u.level
+            WHERE u.email = :email
+            LIMIT 1
+        ');
+        $stmt->execute([':email' => $email]);
+        $user = $stmt->fetch();
+    } catch (Throwable $e) {
+        increment_attempts();
+        return ['success' => false, 'error' => 'Error de conexión a la base de datos'];
+    }
+
+    if (!$user || !password_verify($password, $user['pass'])) {
+        increment_attempts();
+        return ['success' => false, 'error' => 'Email o contraseña incorrectos'];
+    }
+
+    // Login exitoso — guardar UUID en cookie (base64)
+    setcookie('project_user', base64_encode($user['userID']), time() + COOKIE_EXPIRY, COOKIE_PATH);
+
+    reset_attempts();
+    return ['success' => true];
 }
 
 function do_logout(): void {
@@ -48,10 +98,10 @@ function do_logout(): void {
 }
 
 function refresh_auth_cookie(): void {
-    $key             = get_auth_key();
-    $clave           = get_auth_clave();
-    $password_encript = encriptar($clave, $key);
-    setcookie('project_user', $password_encript, time() + COOKIE_EXPIRY, COOKIE_PATH);
+    $user = get_auth_user();
+    if ($user) {
+        setcookie('project_user', base64_encode($user['userID']), time() + COOKIE_EXPIRY, COOKIE_PATH);
+    }
 }
 
 function get_redirect_param(): string {
