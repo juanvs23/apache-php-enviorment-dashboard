@@ -61,7 +61,7 @@ cd /ruta/al/document-root
 ./setup.sh
 ```
 
-El script verifica requisitos, crea la base de datos, configura `.env`, actualiza `.htaccess` y ejecuta el seed.
+El script instala TODO lo necesario: Apache, PHP 8.3, MySQL, extensiones, módulos, crea la base de datos, configura `.env`, actualiza `.htaccess` y siembra los datos iniciales.
 
 ### Manual
 
