@@ -9,6 +9,8 @@
 !.htaccess
 !env-loader.php
 !auth-check.php
+!setup.sh
+!seed.php
 
 # ─── Assets (Bootstrap) ───────────────────────────────────────────────────
 !assets/

@@ -53,6 +53,18 @@ Panel de administración centralizado para entornos de desarrollo con múltiples
 
 ## Instalación
 
+### Automática (recomendado)
+
+```bash
+git clone <repo-url> /ruta/al/document-root
+cd /ruta/al/document-root
+./setup.sh
+```
+
+El script verifica requisitos, crea la base de datos, configura `.env`, actualiza `.htaccess` y ejecuta el seed.
+
+### Manual
+
 ```bash
 # 1. Clonar el repo en el DocumentRoot de Apache
 git clone <repo-url> /ruta/al/document-root
