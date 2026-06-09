@@ -129,6 +129,7 @@ case "$PKG" in
         fi
 
         explain "Instalando PHP $PHP_VER y su módulo para Apache..."
+        PHP_CORE="php${PHP_VER} libapache2-mod-php${PHP_VER}"
         sudo apt-get install -y -qq $PHP_CORE 2>/dev/null
         info "PHP $PHP_VER + mod_php instalados"
 
