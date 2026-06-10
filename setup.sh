@@ -269,8 +269,6 @@ explain "Voy a copiar .env.example → .env y pedirte los datos."
 if [ -f "$ENV_FILE" ]; then
     warn ".env ya existe — lo salteo (tus credenciales están a salvo)"
 else
-    cp "$EXAMPLE" "$ENV_FILE"
-
     echo ""
     echo "  ┌─────────────────────────────────────────────┐"
     echo "  │  Configurá la conexión a tu base de datos:  │"
@@ -283,11 +281,29 @@ else
     read -sp "  Contraseña MySQL: " DB_PASS;        echo ""
 
     explain "Escribiendo .env con tus datos..."
-    sed -i "s|DB_HOST.*|DB_HOST   = '${DB_HOST}'|" "$ENV_FILE"
-    sed -i "s|DB_PORT.*|DB_PORT   = '${DB_PORT}'|" "$ENV_FILE"
-    sed -i "s|DB_NAME.*|DB_NAME   = '${DB_NAME}'|" "$ENV_FILE"
-    sed -i "s|DB_USER.*|DB_USER   = '${DB_USER}'|" "$ENV_FILE"
-    sed -i "s|DB_PASS.*|DB_PASS   = '${DB_PASS}'|" "$ENV_FILE"
+    cat > "$ENV_FILE" << ENVEOF
+# ─── Dev Dashboard ──────────────────────────────────────────────────────────
+# Generado automáticamente por setup.sh
+
+# ─── Base de datos MySQL (obligatorio) ───────────────────────────────────────
+DB_DRIVER = 'mysql'
+DB_HOST   = '${DB_HOST}'
+DB_PORT   = '${DB_PORT}'
+DB_NAME   = '${DB_NAME}'
+DB_USER   = '${DB_USER}'
+DB_PASS   = '${DB_PASS}'
+
+# ─── phpMyAdmin (opcional) ───────────────────────────────────────────────────
+# PMA_URL = 'http://localhost/phpmyadmin/'
+
+# ─── Claves de acceso (informativas, se muestran en el dashboard) ────────────
+# PGA_EMAIL  = 'admin@localhost.com'
+# PGA_PASS   = 'admin'
+# MYSQL_USER = 'root'
+# MYSQL_PASS = ''
+# PMA_USER   = 'root'
+# PMA_PASS   = ''
+ENVEOF
 
     info ".env creado correctamente"
 fi
