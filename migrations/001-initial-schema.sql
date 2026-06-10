@@ -104,4 +104,17 @@ SET @sql = IF(@idx_exists = 0,
     'SELECT "uk_level_name ya existe" AS info');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- ── Seed: niveles por defecto ─────────────────────────────────────────
+INSERT IGNORE INTO `levels` (`levelsID`, `level_name`, `level_type`)
+VALUES (UUID(), 'admin', 0);
+
+INSERT IGNORE INTO `levels` (`levelsID`, `level_name`, `level_type`)
+VALUES (UUID(), 'operator', 0);
+
+INSERT IGNORE INTO `levels` (`levelsID`, `level_name`, `level_type`)
+VALUES (UUID(), 'client', 1);
+
+INSERT IGNORE INTO `levels` (`levelsID`, `level_name`, `level_type`)
+VALUES (UUID(), 'revisor', 1);
+
 SELECT '✅ Migración completada' AS resultado;
