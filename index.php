@@ -126,6 +126,19 @@ if ($authenticated) {
         $tab          = $_GET['tab'] ?? 'usuarios';
         require __DIR__ . '/dashboard-logic/views/user-management.php';
         ?>
+    <?php elseif (isset($_GET['profile'])): ?>
+        <?php
+        require_once __DIR__ . '/dashboard-logic/profile.php';
+        $msg      = '';
+        $msg_type = 'success';
+        $result   = process_profile_action();
+        if ($result) {
+            $msg      = $result['error'] ?? 'Perfil actualizado';
+            $msg_type = $result['success'] ? 'success' : 'danger';
+        }
+        $user = get_auth_user();
+        require __DIR__ . '/dashboard-logic/views/profile.php';
+        ?>
     <?php else: ?>
         <?php
         $projects     = list_projects();

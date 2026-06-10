@@ -24,6 +24,7 @@ $__user = get_auth_user();
                 </span>
             </span>
         <?php endif; ?>
+        <a href="/?profile=1" class="btn btn-outline-info btn-sm">👤 Perfil</a>
         <?php if ($__user && $__user['level_type'] === 0): ?>
             <a href="/?users=1" class="btn btn-outline-success btn-sm">👥 Usuarios</a>
         <?php endif; ?>
