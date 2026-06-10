@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.3.0 (2026-06-10)
+
+### RBAC — Permisos dinámicos
+
+- **Tablas `permissions` y `level_permissions`**: sistema de permisos granular desacoplado del código
+- **Helper `can()`**: verifica permisos con caché estática. Admin (type 0) tiene acceso total
+- **8 permisos**: users.manage, users.edit_same_level, projects.manage, projects.view_all, projects.acept_login, server.view, badge.admin, profile.edit
+- **9 puntos de código refactorizados**: todos los `level_type === 0` reemplazados por `can('permiso')`
+- **UI de gestión de niveles**: `?users=1&tab=levels` — crear, editar, eliminar niveles con checkboxes de permisos
+- **Layout reutilizable**: `management-header.php` + `management-footer.php` con auth check centralizado
+- **Niveles y permisos por defecto**:
+  - admin: todos los permisos
+  - operator: users.manage + projects.* + server.view + profile.edit
+  - client: profile.edit
+  - revisor: projects.view_all + projects.acept_login + profile.edit (view-only)
+
+### Seed y migraciones
+
+- **Seed ampliado**: crea 4 niveles, 8 permisos, 3 usuarios (admin@admin, operator@test.com, revisor@test.com)
+- **SQL migration idempotente**: segura para producción, verifica `information_schema` antes de modificar
+- **`uk_level_name` UNIQUE KEY** en levels
+- **Limpieza de duplicados** en migración
+
+### Perfil de usuario
+
+- **`?profile=1`**: editar email, nombre y contraseña propia (sin cambiar nivel)
+- **Protección SQL injection**: queries con prepared statements en level-management
+
+### Instalación
+
+- **`setup.sh`**: detecta MariaDB y saltea MySQL, heredoc para `.env`, verbose con explicaciones
+- **`migrations/001-initial-schema.sql`**: DDL manual + seed de niveles
+
 ## 1.2.0 (2026-06-08)
 
 ### Auth y base de datos

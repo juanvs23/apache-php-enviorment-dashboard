@@ -4,7 +4,7 @@
 
 - **Apache 2.4** con `mod_php` (NO PHP-FPM) y `mod_rewrite`
 - **PHP 8.3** con `pdo_mysql`, `openssl`, `mbstring`, `session`, `json`, `gd`, `zip`, `intl`, `curl`, `xml`
-- **MySQL 8.0** — base de datos `apache-dashboard` con tablas `levels`, `USERS`, `Project`
+- **MySQL 8.0** — base de datos `apache-dashboard` con tablas `levels`, `USERS`, `Project`, `permissions`, `level_permissions`
 - **Bootstrap 5** en `assets/` (sin CDN)
 
 ## Arquitectura
@@ -21,8 +21,10 @@
 
 - **Login**: email + contraseña contra tabla `USERS`, `password_verify()` con bcrypt
 - **Cookie**: `base64(userID UUID)`, 7 días, se valida en cada request
-- **Levels**: `level_type` 0 = admin, 1 = client
-- **auth-check.php**: `auto_prepend_file` para subdirectorios, usa PDO directo (no Connection) porque corre sin autoloader
+- **Levels**: `level_type` 0 = admin (acceso total), 1 = permisos por tabla
+- **Permisos RBAC**: helper `can('permiso')` en auth.php. Tablas `permissions` + `level_permissions`. Admin (type 0) tiene todos los permisos automáticamente. Los demás niveles consultan la tabla.
+- **8 permisos**: users.manage, users.edit_same_level, projects.manage, projects.view_all, projects.acept_login, server.view, badge.admin, profile.edit
+- **Gestión de niveles**: `?users=1&tab=levels` (solo admin). Layout compartido en `views/components/management-*.php`
 
 ## Proyectos
 
@@ -43,6 +45,8 @@
 6. **No sesiones PHP para auth**: solo cookie + DB lookup
 7. **Rate limiter usa sesiones PHP** (`$_SESSION['login_attempts']`)
 8. **El dashboard NO es para producción**: sin CSRF, expone credenciales en el card de Acciones
+9. **RBAC**: admin (type 0) siempre tiene todos los permisos vía `can()`. Otros niveles consultan `level_permissions`
+10. **Niveles protegidos**: admin no se puede editar ni eliminar desde la UI. Client/operator/revisor son editables
 
 ## Archivos clave
 
@@ -56,7 +60,9 @@
 | `projects.php` | `list_projects()` desde filesystem |
 | `Connection.php` | Singleton PDO + auto-migrate |
 | `Migration.php` | Schema DDL (`CREATE TABLE IF NOT EXISTS`) |
-| `Seed.php` | Datos iniciales (`INSERT IGNORE`) |
+| `Seed.php` | Datos iniciales: 4 niveles, 8 permisos, 3 usuarios |
+| `level-management.php` | CRUD de niveles y permisos (solo admin) |
+| `profile.php` | Edición de perfil propio |
 | `setup.sh` | Instalador automático multi-distro |
 | `SETUP.md` | Guía manual para IA (macOS, Windows, etc.) |
 

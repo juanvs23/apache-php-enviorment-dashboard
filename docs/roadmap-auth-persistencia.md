@@ -341,3 +341,12 @@ Reemplaza todos los `level_type === 0` por `can('users.manage')`, `can('server.v
 - `handle_user_update()` verifica que el usuario logueado no edite a otro de su mismo nivel
 - El check usa permisos: si no tiene `users.edit_same_level`, bloquea la edición
 - Admin tiene todos los permisos por definición (`can()` devuelve `true` siempre para admin)
+
+### ✅ Estado: COMPLETADO (2026-06-10)
+
+- Tablas `permissions` y `level_permissions` creadas
+- Helper `can()` implementado con caché
+- 9 puntos de `level_type` reemplazados
+- UI de gestión de niveles funcionando
+- Perfil de usuario (`?profile=1`)
+- Layout reutilizable `management-header/footer.php`
