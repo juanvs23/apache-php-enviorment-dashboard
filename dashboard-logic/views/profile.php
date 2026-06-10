@@ -24,7 +24,7 @@
         <div class="text-center mb-4">
             <div class="display-1 mb-2">👤</div>
             <h4 class="text-light mb-1"><?= htmlspecialchars($user['name'] ?? $user['email']) ?></h4>
-            <span class="badge bg-<?= $user['level_type'] == 0 ? 'danger' : 'primary' ?> fs-6">
+            <span class="badge bg-<?= can('badge.admin', $user) ? 'danger' : 'primary' ?> fs-6">
                 <?= htmlspecialchars($user['level_name']) ?>
             </span>
         </div>

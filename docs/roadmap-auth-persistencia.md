@@ -274,3 +274,70 @@ Fase 0 (Base arquitectónica)
 ```
 
 Cada fase se apoya en la anterior. No se puede empezar la Fase 2 sin la 1, ni la 4 sin la 3. Las fases 5 (tests) corre en paralelo con cada fase anterior — cada entidad, use case y repositorio se testea **en el momento en que se escribe**, no al final.
+
+---
+
+## 🚨 Emergencia: Sistema de permisos dinámicos
+
+### Problema
+
+Actualmente los permisos están **hardcodeados** con `level_type === 0` (admin) y `level_type === 1` (client).
+No se pueden crear nuevos tipos de usuario ni modificar sus permisos desde la UI.
+
+### Puntos del código que usan `level_type`
+
+| # | Archivo | Línea | Condición | Qué controla |
+|---|---------|:---:|-----------|--------------|
+| 1 | `views/dashboard.php` | 22 | `level_type == 0` | Color del badge (admin rojo, otros azul) |
+| 2 | `views/dashboard.php` | 28 | `level_type === 0` | Mostrar link "👥 Usuarios" en navbar |
+| 3 | `views/dashboard.php` | 39 | `level_type === 0` | Mostrar tabs (Proyectos / Servidor) |
+| 4 | `views/dashboard.php` | 72 | `level_type === 0` | Mostrar sección Server Info |
+| 5 | `index.php` | 161 | `level_type === 0` | Admin: forzar `acept_login = 1` (ver todos los botones) |
+| 6 | `index.php` | 171 | `level_type === 1` | Client: filtrar proyectos por `user_own` |
+| 7 | `views/profile.php` | 27 | `level_type == 0` | Color del badge en perfil |
+| 8 | `views/user-management.php` | 103 | `level_type == 0` | Color del badge en lista de usuarios |
+| 9 | `user-management.php` | 186 | `level_type = 1` | Query para obtener solo clientes (`get_client_users()`) |
+
+**Total: 9 puntos** donde `level_type` controla comportamiento.
+
+### Plan de refactor (5 pasos)
+
+#### Paso 1 — Nuevas tablas
+
+```sql
+permissions         → catálogo de permisos (perm_key, perm_label)
+level_permissions   → relación nivel ↔ permisos
+```
+
+#### Paso 2 — Helper `can()`
+
+```php
+function can(string $perm_key, ?array $user = null): bool
+```
+Reemplaza todos los `level_type === 0` por `can('users.manage')`, `can('server.view')`, etc.
+
+#### Paso 3 — Reemplazar los 9 puntos
+
+| # | Condición actual | Reemplazo |
+|---|-----------------|-----------|
+| 1 | `level_type == 0` | `can('badge.admin')` |
+| 2 | `level_type === 0` | `can('users.manage')` |
+| 3 | `level_type === 0` | `can('server.view')` |
+| 4 | `level_type === 0` | `can('server.view')` |
+| 5 | `level_type === 0` | `can('projects.view_all')` |
+| 6 | `level_type === 1` | `!can('projects.view_all')` (implícito) |
+| 7 | `level_type == 0` | `can('badge.admin')` |
+| 8 | `level_type == 0` | `can('badge.admin')` |
+| 9 | `level_type = 1` | Nueva función `get_users_by_permission('projects.assign')` |
+
+#### Paso 4 — UI de gestión de niveles (solo admin)
+
+- Crear / Editar / Eliminar niveles
+- Checkboxes de permisos por nivel
+- Validación: no se puede editar ni eliminar el nivel `admin`
+
+#### Paso 5 — Regla de seguridad entre usuarios del mismo nivel
+
+- `handle_user_update()` verifica que el usuario logueado no edite a otro de su mismo nivel
+- El check usa permisos: si no tiene `users.edit_same_level`, bloquea la edición
+- Admin tiene todos los permisos por definición (`can()` devuelve `true` siempre para admin)

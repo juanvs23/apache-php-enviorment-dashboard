@@ -104,6 +104,42 @@ function refresh_auth_cookie(): void {
     }
 }
 
+/**
+ * Verifica si el usuario tiene un permiso específico.
+ * Admin (level_type=0) siempre tiene todos los permisos.
+ * Los permisos se cachean en una variable estática para no consultar la DB en cada llamada.
+ */
+function can(string $perm_key, ?array $user = null): bool
+{
+    static $cache = [];
+
+    $user ??= get_auth_user();
+    if (!$user) return false;
+
+    // Admin tiene todos los permisos
+    if ($user['level_type'] === 0) return true;
+
+    $uid = $user['userID'];
+    if (!isset($cache[$uid])) {
+        try {
+            $pdo = Connection::get();
+            $stmt = $pdo->prepare('
+                SELECT p.perm_key
+                FROM permissions p
+                JOIN level_permissions lp ON lp.perm_id = p.id
+                JOIN levels l ON l.levelsID = lp.levelID
+                WHERE l.levelsID = (SELECT level FROM USERS WHERE userID = :uid)
+            ');
+            $stmt->execute([':uid' => $uid]);
+            $cache[$uid] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Throwable) {
+            $cache[$uid] = [];
+        }
+    }
+
+    return in_array($perm_key, $cache[$uid] ?? []);
+}
+
 function get_redirect_param(): string {
     return $_POST['redirect'] ?? $_GET['redirect'] ?? '';
 }

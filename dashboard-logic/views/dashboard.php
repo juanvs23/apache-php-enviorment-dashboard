@@ -19,13 +19,13 @@ $__user = get_auth_user();
         <?php if ($__user): ?>
             <span class="text-light small me-2">
                 <?= htmlspecialchars($__user['name'] ?? $__user['email']) ?>
-                <span class="badge bg-<?= $__user['level_type'] == 0 ? 'danger' : 'primary' ?> ms-1">
+                <span class="badge bg-<?= $__user && can('badge.admin', $__user) ? 'danger' : 'primary' ?> ms-1">
                     <?= htmlspecialchars($__user['level_name']) ?>
                 </span>
             </span>
         <?php endif; ?>
         <a href="/?profile=1" class="btn btn-outline-info btn-sm">👤 Perfil</a>
-        <?php if ($__user && $__user['level_type'] === 0): ?>
+        <?php if ($__user && can('users.manage', $__user)): ?>
             <a href="/?users=1" class="btn btn-outline-success btn-sm">👥 Usuarios</a>
         <?php endif; ?>
         <a href="?logout=1" class="btn btn-outline-light btn-sm">Cerrar sesión</a>
@@ -36,7 +36,7 @@ $__user = get_auth_user();
 
     <!-- ─── Tabs ──────────────────────────────────────────────────── -->
     <?php $__auth_user = get_auth_user(); ?>
-    <?php if ($__auth_user && $__auth_user['level_type'] === 0): ?>
+    <?php if ($__auth_user && can('server.view', $__auth_user)): ?>
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabProyectos"
@@ -69,7 +69,7 @@ $__user = get_auth_user();
         </div>
 
         <!-- ─── Server Info ───────────────────────────────────────── -->
-        <?php if ($__auth_user && $__auth_user['level_type'] === 0): ?>
+        <?php if ($__auth_user && can('server.view', $__auth_user)): ?>
         <div class="tab-pane fade" id="tabServer">
             <div class="row g-3 justify-content-center">
                 <?php require __DIR__ . '/components/server-info.php'; ?>
