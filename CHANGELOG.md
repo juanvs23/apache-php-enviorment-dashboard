@@ -1,5 +1,53 @@
 # Changelog
 
+## 1.2.0 (2026-06-08)
+
+### Auth y base de datos
+
+- **Migración MySQL**: reemplazo total de SQLite/AES por MySQL con tabla USERS y bcrypt
+- **Auto-migrate**: `Connection::get()` ejecuta `Migration::apply()` al conectar por primera vez
+- **Seed data**: `seed.php` crea nivel admin y usuario `admin@admin / Admin123`
+- **Tabla Project**: `project_name`, `user_own` (NULL permite sin asignar), `acept_login` (TINYINT)
+- **Registro de `acept_login`** en `Migration.php`
+
+### Gestión de usuarios
+
+- **CRUD completo**: crear, editar (modal), eliminar usuarios con niveles (admin/client)
+- **Asignación de proyectos**: cada proyecto se asigna a un usuario cliente desde la UI
+- **Filtro por usuario**: clientes solo ven proyectos asignados (`user_own = su UUID`)
+- **Control de acceso**: botones Acceder y WP Admin solo visibles si `acept_login = 1`
+
+### Instalación y setup
+
+- **`setup.sh`**: instalador multi-distro (Ubuntu, Debian, RHEL, Fedora, Arch, openSUSE)
+  - Auto-detecta versión de PHP, package manager, servicio Apache
+  - Instala Apache + PHP + MySQL + 12 extensiones para WP/Laravel
+  - Configura `.env` interactivo, base de datos, VirtualHost, `.htaccess`
+  - Detecta MariaDB y saltea MySQL si ya está corriendo en 3306
+  - Heredoc para `.env` (inmune a caracteres especiales)
+  - Verbose: explica cada paso con `→`
+- **`SETUP.md`**: guía de instalación manual para IA — macOS, Windows (XAMPP, Laragon, WSL2, nativo), Linux nicho
+
+### Documentación
+
+- **README.md** reescrito: requisitos reales, distros soportadas, pasos de instalación, `.env` actualizado, esquema DB, niveles de acceso, estructura de archivos, troubleshooting del setup.sh, significado de íconos (`[✓] [!] [✗]`)
+- **`.env.example`** actualizado: eliminados `DASHBOARD_KEY`/`DASHBOARD_CLAVE` obsoletos, agregados `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`
+- **`docs/mejoras.md`** actualizado: marcados items completados, nueva sección Base de datos
+
+### Diseño
+
+- **Dark theme**: fondo gradiente, cards con hover box-shadow, scrollbar personalizado
+- **Cards en grid**: `row-cols-1 row-cols-md-2 row-cols-xl-3`, responsive
+- **Modales**: crear usuario, crear proyecto, editar proyecto (reemplazan tabs/accordions)
+- **Campos en línea individual**: cada campo ocupa su propia línea en cards y modales
+
+### Infraestructura
+
+- **PHP limits**: `memory_limit = 2048M`, `upload_max_filesize = 512M`, `post_max_size = 256M`
+- **`.htaccess` portable**: ruta absoluta documentada con ⚠️ para cambiar en deploy
+- **`.gitignore`**: excepciones para `setup.sh`, `seed.php`, `SETUP.md`
+- **`docs/context.md`**: creado con particularidades del proyecto para IA
+
 ## 1.1.0 (2026-06-04)
 
 ### Features
