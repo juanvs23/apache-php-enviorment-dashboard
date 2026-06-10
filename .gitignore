@@ -12,6 +12,8 @@
 !setup.sh
 !seed.php
 !SETUP.md
+!migrations/
+!migrations/**
 
 # ─── Assets (Bootstrap) ───────────────────────────────────────────────────
 !assets/
