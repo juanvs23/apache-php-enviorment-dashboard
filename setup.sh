@@ -276,7 +276,8 @@ else
     echo ""
     read -p "  Host MySQL [localhost]: " DB_HOST;    DB_HOST=${DB_HOST:-localhost}
     read -p "  Puerto MySQL [3306]: " DB_PORT;        DB_PORT=${DB_PORT:-3306}
-    read -p "  Nombre de la BD [apache-dashboard]: " DBN; DB_NAME=${DB_NAME:-apache-dashboard}
+    read -p "  Nombre de la BD [apache-dashboard]: " DB_NAME_IN
+    DB_NAME=${DB_NAME_IN:-apache-dashboard}
     read -p "  Usuario MySQL: " DB_USER
     read -sp "  Contraseña MySQL: " DB_PASS;        echo ""
 
@@ -308,8 +309,14 @@ ENVEOF
     info ".env creado correctamente"
 fi
 
-# Leer valores
-source <(grep -E '^DB_' "$ENV_FILE" | sed "s/ //g; s/'//g" || true)
+# Leer valores del .env para los siguientes pasos
+# cut -d"'" -f2 extrae el valor entre comillas simples. No falla con
+# /, |, $, ;, &, espacios ni la mayoria de caracteres especiales.
+# NOTA: si tu contraseña contiene ' (comilla simple), guardala sin ' o
+# editá el .env manualmente después.
+DB_NAME=$(grep '^DB_NAME' "$ENV_FILE" | head -1 | cut -d"'" -f2)
+DB_USER=$(grep '^DB_USER' "$ENV_FILE" | head -1 | cut -d"'" -f2)
+DB_PASS=$(grep '^DB_PASS' "$ENV_FILE" | head -1 | cut -d"'" -f2)
 DB_NAME=${DB_NAME:-apache-dashboard}; DB_USER=${DB_USER:-root}; DB_PASS=${DB_PASS:-}
 
 # ══════════════════════════════════════════════════════════════════════
