@@ -26,7 +26,8 @@ final class Migration
                 level_name VARCHAR(255) NOT NULL,
                 level_type TINYINT      NOT NULL,
                 PRIMARY KEY (levelsID),
-                UNIQUE KEY uk_levels_id (levelsID)
+                UNIQUE KEY uk_levels_id (levelsID),
+                UNIQUE KEY uk_level_name (level_name)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ');
 
@@ -54,6 +55,24 @@ final class Migration
                 UNIQUE KEY uk_projectid (id),
                 KEY fk_project_user (user_own),
                 CONSTRAINT fk_project_user FOREIGN KEY (user_own) REFERENCES USERS (userID)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ');
+
+        $pdo->exec('
+            CREATE TABLE IF NOT EXISTS permissions (
+                id         INT AUTO_INCREMENT PRIMARY KEY,
+                perm_key   VARCHAR(50)  NOT NULL UNIQUE,
+                perm_label VARCHAR(100) NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ');
+
+        $pdo->exec('
+            CREATE TABLE IF NOT EXISTS level_permissions (
+                levelID CHAR(36) NOT NULL,
+                perm_id INT      NOT NULL,
+                PRIMARY KEY (levelID, perm_id),
+                CONSTRAINT fk_lp_level FOREIGN KEY (levelID) REFERENCES levels (levelsID) ON DELETE CASCADE,
+                CONSTRAINT fk_lp_perm  FOREIGN KEY (perm_id) REFERENCES permissions (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ');
     }

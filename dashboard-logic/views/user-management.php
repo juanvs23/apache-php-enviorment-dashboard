@@ -11,51 +11,7 @@
  *   $tab          — string 'usuarios' | 'proyectos'
  */
 ?>
-<style>
-.sidebar-link {
-    display: block;
-    padding: 0.75rem 1rem;
-    color: #adb5bd;
-    text-decoration: none;
-    border-left: 3px solid transparent;
-    transition: .15s;
-}
-.sidebar-link:hover {
-    color: #fff;
-    background: rgba(255,255,255,.05);
-}
-.sidebar-link.active {
-    color: #fff;
-    background: rgba(255,255,255,.1);
-    border-left-color: #0d6efd;
-}
-</style>
-
-<nav class="navbar navbar-dark bg-dark px-3">
-    <span class="navbar-brand mb-0 h1">
-        Gestión de Usuarios
-    </span>
-    <a href="/" class="btn btn-outline-light btn-sm">Volver al Dashboard</a>
-</nav>
-
-<div class="d-flex" style="min-height: calc(100vh - 56px); background-color: var(--bs-gray-600);">
-
-    <!-- ─── Sidebar ─────────────────────────────────────────────────── -->
-    <div class="bg-dark p-0" style="width: 220px; flex-shrink: 0;">
-        <div class="d-flex flex-column py-3">
-            <a href="/?users=1&tab=usuarios"
-               class="sidebar-link <?= $tab === 'usuarios' ? 'active' : '' ?>">
-                👥 Usuarios
-            </a>
-            <a href="/?users=1&tab=proyectos"
-               class="sidebar-link <?= $tab === 'proyectos' ? 'active' : '' ?>">
-                📁 Proyectos
-            </a>
-        </div>
-    </div>
-
-    <!-- ─── Contenido ────────────────────────────────────────────────── -->
-    <div class="flex-grow-1 p-4">
+<?php require __DIR__ . '/components/management-header.php'; ?>
 
         <?php if ($msg): ?>
         <div class="alert alert-<?= $msg_type ?> alert-dismissible fade show" role="alert">
@@ -100,7 +56,7 @@
                                 <div class="mb-2">
                                     <small class="text-secondary">Nivel</small>
                                     <div>
-                                        <span class="badge bg-<?= $u['level_type'] == 0 ? 'danger' : 'primary' ?> fs-6">
+                                        <span class="badge bg-<?= can('badge.admin', $u) ? 'danger' : 'primary' ?> fs-6">
                                             <?= htmlspecialchars($u['level_name']) ?>
                                         </span>
                                     </div>
@@ -457,5 +413,4 @@
 
         <?php endif; ?>
 
-    </div>
-</div>
+<?php require __DIR__ . '/components/management-footer.php'; ?>

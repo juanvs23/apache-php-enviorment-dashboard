@@ -112,19 +112,48 @@ if ($authenticated) {
     <?php elseif (isset($_GET['users'])): ?>
         <?php
         require_once __DIR__ . '/dashboard-logic/user-management.php';
+
+        $tab = $_GET['tab'] ?? 'usuarios';
+
+        if ($tab === 'levels') {
+            require_once __DIR__ . '/dashboard-logic/level-management.php';
+            $msg      = '';
+            $msg_type = 'success';
+            $result   = process_level_action();
+            if ($result) {
+                $msg      = $result['error'] ?? 'Operación exitosa';
+                $msg_type = $result['success'] ? 'success' : 'danger';
+            }
+            $levels      = get_all_levels_with_perms();
+            $permissions = get_all_permissions();
+            require __DIR__ . '/dashboard-logic/views/level-management.php';
+        } else {
+            $msg      = '';
+            $msg_type = 'success';
+            $result   = process_user_action();
+            if ($result) {
+                $msg      = $result['error'] ?? 'Operación exitosa';
+                $msg_type = $result['success'] ? 'success' : 'danger';
+            }
+            $users        = get_all_users();
+            $levels       = get_all_levels();
+            $projects     = get_all_projects();
+            $client_users = get_client_users();
+            require __DIR__ . '/dashboard-logic/views/user-management.php';
+        }
+        ?>
+    <?php elseif (isset($_GET['profile'])): ?>
+        <?php
+        require_once __DIR__ . '/dashboard-logic/profile.php';
         $msg      = '';
         $msg_type = 'success';
-        $result   = process_user_action();
+        $result   = process_profile_action();
         if ($result) {
-            $msg      = $result['error'] ?? 'Operación exitosa';
+            $msg      = $result['error'] ?? 'Perfil actualizado';
             $msg_type = $result['success'] ? 'success' : 'danger';
         }
-        $users        = get_all_users();
-        $levels       = get_all_levels();
-        $projects     = get_all_projects();
-        $client_users = get_client_users();
-        $tab          = $_GET['tab'] ?? 'usuarios';
-        require __DIR__ . '/dashboard-logic/views/user-management.php';
+        $user = get_auth_user();
+        require __DIR__ . '/dashboard-logic/views/profile.php';
         ?>
     <?php else: ?>
         <?php
@@ -145,7 +174,7 @@ if ($authenticated) {
             unset($p);
 
             // Admin ve TODOS los botones siempre
-            if ($auth_user && $auth_user['level_type'] === 0) {
+            if ($auth_user && can('projects.acept_login', $auth_user)) {
                 foreach ($projects as &$p) {
                     $p['acept_login'] = 1;
                 }
@@ -155,7 +184,7 @@ if ($authenticated) {
             // Si falla la DB, asumir 0
         }
 
-        if ($auth_user && $auth_user['level_type'] === 1) {
+        if ($auth_user && !can('projects.view_all', $auth_user)) {
             $allowed = [];
             try {
                 $stmt = $pdo->prepare('SELECT project_name FROM Project WHERE user_own = :uid');
