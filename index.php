@@ -166,8 +166,14 @@ if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html',
                 $viteMsg = $useVite ? ' con Vite.js' : '';
                 header("Location: /?flash=success&msg=" . urlencode("Proyecto creado: {$name}{$viteMsg}"));
             } else {
-                header("Location: /?flash=info&msg=" . urlencode('Creación desde cero para Laravel próximamente. Usá Clonar desde GitHub.'));
-                exit;
+                // Laravel desde cero
+                $dbName = trim($_POST['db_name'] ?? '');
+                if ($dbName === '') {
+                    header("Location: /?flash=danger&msg=" . urlencode('El nombre de la base de datos es requerido'));
+                    exit;
+                }
+                $creator->createLaravel($name, $dir, $dbName);
+                header("Location: /?flash=success&msg=" . urlencode("Proyecto Laravel creado: {$name}"));
             }
         } catch (\RuntimeException $e) {
             header("Location: /?flash=danger&msg=" . urlencode($e->getMessage()));

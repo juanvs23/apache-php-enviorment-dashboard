@@ -82,6 +82,68 @@ final class ProjectCreator
     }
 
     /**
+     * Crea un proyecto Laravel desde cero.
+     *
+     * @param string $projectName Nombre descriptivo
+     * @param string $directory   Nombre del directorio
+     * @param string $dbName      Nombre de la base de datos MySQL
+     * @return string Ruta absoluta del directorio creado
+     * @throws \RuntimeException Si falla composer o la DB
+     */
+    public function createLaravel(string $projectName, string $directory, string $dbName): string
+    {
+        $targetDir = $this->rootPath . '/' . $directory;
+
+        if (is_dir($targetDir)) {
+            throw new \RuntimeException("El directorio '{$directory}' ya existe");
+        }
+
+        // Crear proyecto con Composer (en background, puede tardar ~60s)
+        @mkdir('/tmp/composer', 0777, true);
+        $cmd = sprintf('cd %s && COMPOSER_HOME=/tmp/composer /usr/bin/composer create-project --prefer-dist --no-interaction laravel/laravel %s 2>&1',
+            escapeshellarg($this->rootPath), escapeshellarg($directory));
+        set_time_limit(0); // sin límite de tiempo
+        $output = []; $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+        // No esperamos — el dashboard mostrará el proyecto cuando Composer termine
+        $output = []; $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+
+        if ($exitCode !== 0 || !is_dir($targetDir)) {
+            throw new \RuntimeException('Error al crear Laravel: ' . implode("\n", array_slice($output, -5)));
+        }
+
+        // Crear base de datos
+        $this->createDatabase($dbName);
+
+        // Configurar .env
+        $env = file_get_contents($targetDir . '/.env');
+        $env = preg_replace('/DB_DATABASE=.*/', "DB_DATABASE={$dbName}", $env);
+        $env = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME=' . ($_ENV['DB_USER'] ?? 'juanvs23'), $env);
+        $env = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD=' . ($_ENV['DB_PASS'] ?? ''), $env);
+        file_put_contents($targetDir . '/.env', $env);
+
+        // .gitignore + git init
+        exec(sprintf('cd %s && git init 2>&1', escapeshellarg($targetDir)));
+        file_put_contents($targetDir . '/user-data.txt', "type: laravel\nname: {$projectName}\n");
+        exec(sprintf('chmod -R 0777 %s', escapeshellarg($targetDir)));
+
+        return $targetDir;
+    }
+
+    /**
+     * Crea una base de datos MySQL si no existe.
+     */
+    private function createDatabase(string $dbName): void
+    {
+        $user = $_ENV['DB_USER'] ?? 'juanvs23';
+        $pass = $_ENV['DB_PASS'] ?? '';
+        $cmd = sprintf('mysql -u%s -p%s -e "CREATE DATABASE IF NOT EXISTS %s CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" 2>&1',
+            escapeshellarg($user), escapeshellarg($pass), escapeshellarg($dbName));
+        exec($cmd, $out, $code);
+    }
+
+    /**
      * Crea un proyecto clonando un repositorio desde GitHub/Git.
      *
      * @param string      $projectName Nombre descriptivo del proyecto
