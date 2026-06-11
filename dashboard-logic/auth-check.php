@@ -26,6 +26,8 @@ if (
     || str_contains($__ua, 'PageSpeed')
     || str_contains($__ua, 'Google Page Speed')
     || str_contains($__ua, 'Lighthouse')
+    || str_contains($__ua, 'GTmetrix')
+    || str_contains($__ua, 'GTmetrix/')
 ) {
     return;
 }
