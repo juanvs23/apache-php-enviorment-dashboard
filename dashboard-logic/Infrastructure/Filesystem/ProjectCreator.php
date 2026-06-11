@@ -133,6 +133,23 @@ final class ProjectCreator
     }
 
     /**
+     * Intenta detectar el tipo de proyecto por sus archivos.
+     */
+    private function detectProjectType(string $dir): string
+    {
+        if (file_exists($dir . '/wp-config.php') || file_exists($dir . '/wp-login.php')) {
+            return 'wordpress';
+        }
+        if (file_exists($dir . '/artisan') && file_exists($dir . '/composer.json')) {
+            return 'laravel';
+        }
+        if (file_exists($dir . '/package.json')) {
+            return 'node';
+        }
+        return 'html';
+    }
+
+    /**
      * Crea un proyecto HTML vanilla (sin bundler).
      */
     private function createVanillaProject(string $targetDir, string $projectName): void
