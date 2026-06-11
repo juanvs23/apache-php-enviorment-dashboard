@@ -52,7 +52,7 @@
                                 <label class="form-label text-light">URL del repositorio</label>
                                 <input type="text" name="repo_url" class="form-control bg-dark text-light border-secondary"
                                        placeholder="https://github.com/usuario/repo.git">
-                                <small class="text-secondary">HTTPS o SSH. Ej: <code>git@github.com:usuario/repo.git</code></small>
+                                <small class="text-secondary">Solo HTTPS. Repositorios públicos o privados con token.</small>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-light">Rama (opcional)</label>
