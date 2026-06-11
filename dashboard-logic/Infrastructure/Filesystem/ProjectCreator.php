@@ -60,6 +60,56 @@ final class ProjectCreator
     }
 
     /**
+     * Crea un proyecto clonando un repositorio desde GitHub/Git.
+     *
+     * @param string      $projectName Nombre descriptivo del proyecto
+     * @param string      $directory   Nombre del directorio destino
+     * @param string      $repoUrl     URL del repo (HTTPS o SSH)
+     * @param string|null $branch      Rama a clonar (null = default)
+     * @return string Ruta absoluta del directorio creado
+     * @throws \RuntimeException Si el directorio ya existe o git falla
+     */
+    public function createFromGithub(
+        string $projectName,
+        string $directory,
+        string $repoUrl,
+        ?string $branch = null,
+    ): string {
+        $targetDir = $this->rootPath . '/' . $directory;
+
+        if (is_dir($targetDir)) {
+            throw new \RuntimeException("El directorio '{$directory}' ya existe");
+        }
+
+        $cmd = sprintf('git clone %s %s', escapeshellarg($repoUrl), escapeshellarg($targetDir));
+        if ($branch !== null && $branch !== '') {
+            $cmd .= sprintf(' --branch %s', escapeshellarg($branch));
+        }
+        $cmd .= ' 2>&1';
+
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+
+        if ($exitCode !== 0 || !is_dir($targetDir)) {
+            $error = implode("\n", $output);
+            throw new \RuntimeException("Error al clonar el repositorio: {$error}");
+        }
+
+        // Detectar tipo de proyecto
+        $type = $this->detectProjectType($targetDir);
+        file_put_contents($targetDir . '/user-data.txt', "type: {$type}\nname: {$projectName}\n");
+
+        // npm install automático si tiene package.json
+        if (file_exists($targetDir . '/package.json')) {
+            $installCmd = sprintf('cd %s && npm install 2>&1', escapeshellarg($targetDir));
+            exec($installCmd, $installOutput, $installExitCode);
+        }
+
+        return $targetDir;
+    }
+
+    /**
      * Crea un proyecto HTML vanilla (sin bundler).
      */
     private function createVanillaProject(string $targetDir, string $projectName): void

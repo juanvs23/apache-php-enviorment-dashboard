@@ -170,6 +170,26 @@
             </div>
             <form method="post" action="/?create_project=html">
                 <div class="modal-body">
+                    <!-- ─── Origen del proyecto ────────────────────── -->
+                    <div class="mb-3">
+                        <label class="form-label text-light mb-2">Origen del proyecto</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="source" value="scratch"
+                                       id="htmlSourceScratch" checked
+                                       onchange="document.getElementById('htmlScratchFields').style.display='';document.getElementById('htmlGithubFields').style.display='none';">
+                                <label class="form-check-label text-light" for="htmlSourceScratch">🆕 Desde cero</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="source" value="github"
+                                       id="htmlSourceGithub"
+                                       onchange="document.getElementById('htmlScratchFields').style.display='none';document.getElementById('htmlGithubFields').style.display='';">
+                                <label class="form-check-label text-light" for="htmlSourceGithub">📥 Clonar desde GitHub</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ─── Nombre y directorio (común) ──────────── -->
                     <div class="mb-3">
                         <label class="form-label text-light">Nombre del proyecto</label>
                         <input type="text" name="project_name" class="form-control bg-dark text-light border-secondary"
@@ -182,21 +202,44 @@
                                placeholder="ej: landing-page" required>
                         <small class="text-secondary">Se creará en <code>/mnt/vol/projects/apache/</code>.</small>
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="use_vite" value="1" id="htmlUseVite">
-                            <label class="form-check-label text-light" for="htmlUseVite">
-                                ⚡ Usar Vite.js
-                            </label>
+
+                    <!-- ─── Campos: Desde cero ─────────────────────── -->
+                    <div id="htmlScratchFields">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="use_vite" value="1" id="htmlUseVite">
+                                <label class="form-check-label text-light" for="htmlUseVite">
+                                    ⚡ Usar Vite.js
+                                </label>
+                            </div>
+                            <small class="text-secondary d-block mt-1">
+                                Incluye <code>package.json</code>, <code>vite.config.js</code> y estructura <code>src/</code>.
+                            </small>
                         </div>
-                        <small class="text-secondary d-block mt-1">
-                            Incluye <code>package.json</code>, <code>vite.config.js</code> y estructura <code>src/</code>.
-                            Ideal para proyectos con JS moderno y HMR.
-                        </small>
+                        <div class="alert alert-info small mb-0">
+                            <strong>Se creará:</strong> <code>index.html</code>, <code>assets/css/style.css</code>,
+                            y <code>user-data.txt</code>.
+                        </div>
                     </div>
-                    <div class="alert alert-info small mb-0">
-                        <strong>Se instalará:</strong> <code>index.html</code>, <code>css/style.css</code>,
-                        <code>js/app.js</code> y <code>user-data.txt</code> con datos para el dashboard.
+
+                    <!-- ─── Campos: GitHub ─────────────────────────── -->
+                    <div id="htmlGithubFields" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label text-light">URL del repositorio</label>
+                            <input type="url" name="repo_url" class="form-control bg-dark text-light border-secondary"
+                                   placeholder="https://github.com/usuario/repo.git">
+                            <small class="text-secondary">HTTPS o SSH. Se hará <code>git clone</code>.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">Rama (opcional)</label>
+                            <input type="text" name="branch" class="form-control bg-dark text-light border-secondary"
+                                   placeholder="main">
+                            <small class="text-secondary">Por defecto: rama principal del repo.</small>
+                        </div>
+                        <div class="alert alert-info small mb-0">
+                            <strong>Se hará:</strong> <code>git clone</code> del repo, se creará
+                            <code>user-data.txt</code> y se ejecutará <code>npm install</code> si hay <code>package.json</code>.
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-secondary">
