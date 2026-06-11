@@ -2,12 +2,14 @@
 /**
  * Dashboard autenticado.
  * Variables disponibles:
- *   $projects      — array de proyectos (list_projects)
- *   $has_projects  — bool
- *   $script_name   — string
- *   get_auth_user() — usuario autenticado de auth.php
+ *   $projects       — array de proyectos
+ *   $has_projects   — bool
+ *   $script_name    — string
+ *   $authUser       — array usuario autenticado
+ *   $isAdmin        — bool si es admin (level_type=0)
+ *   $canManageUsers — bool permiso users.manage
+ *   $canViewServer  — bool permiso server.view
  */
-$__user = get_auth_user();
 ?>
 <nav class="navbar navbar-dark bg-dark px-3">
     <span class="navbar-brand mb-0 h1 d-flex align-items-center gap-2">
@@ -16,16 +18,16 @@ $__user = get_auth_user();
         <small class="text-muted fw-normal fs-6"><?= gethostname() ?></small>
     </span>
     <div class="d-flex align-items-center gap-2">
-        <?php if ($__user): ?>
+        <?php if ($authUser): ?>
             <span class="text-light small me-2">
-                <?= htmlspecialchars($__user['name'] ?? $__user['email']) ?>
-                <span class="badge bg-<?= $__user && can('badge.admin', $__user) ? 'danger' : 'primary' ?> ms-1">
-                    <?= htmlspecialchars($__user['level_name']) ?>
+                <?= htmlspecialchars($authUser['name'] ?? $authUser['email']) ?>
+                <span class="badge bg-<?= $isAdmin ? 'danger' : 'primary' ?> ms-1">
+                    <?= htmlspecialchars($authUser['level_name']) ?>
                 </span>
             </span>
         <?php endif; ?>
         <a href="/?profile=1" class="btn btn-outline-info btn-sm">👤 Perfil</a>
-        <?php if ($__user && can('users.manage', $__user)): ?>
+        <?php if ($canManageUsers): ?>
             <a href="/?users=1" class="btn btn-outline-success btn-sm">👥 Usuarios</a>
         <?php endif; ?>
         <a href="?logout=1" class="btn btn-outline-light btn-sm">Cerrar sesión</a>
@@ -35,8 +37,7 @@ $__user = get_auth_user();
 <section class="py-4 container-fluid" style="min-height: calc(100vh - 56px); background: linear-gradient(135deg, #1a1d23 0%, #2d323e 100%);">
 
     <!-- ─── Tabs ──────────────────────────────────────────────────── -->
-    <?php $__auth_user = get_auth_user(); ?>
-    <?php if ($__auth_user && can('server.view', $__auth_user)): ?>
+    <?php if ($canViewServer): ?>
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabProyectos"
@@ -69,7 +70,7 @@ $__user = get_auth_user();
         </div>
 
         <!-- ─── Server Info ───────────────────────────────────────── -->
-        <?php if ($__auth_user && can('server.view', $__auth_user)): ?>
+        <?php if ($canViewServer): ?>
         <div class="tab-pane fade" id="tabServer">
             <div class="row g-3 justify-content-center">
                 <?php require __DIR__ . '/components/server-info.php'; ?>

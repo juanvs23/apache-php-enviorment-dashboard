@@ -4,6 +4,8 @@
  * Variables disponibles:
  *   $msg      — string mensaje de resultado
  *   $msg_type — string 'success' | 'danger'
+ *   $user     — array usuario autenticado
+ *   $isAdmin  — bool si es admin (level_type=0)
  */
 ?>
 <nav class="navbar navbar-dark bg-dark px-3">
@@ -24,7 +26,7 @@
         <div class="text-center mb-4">
             <div class="display-1 mb-2">👤</div>
             <h4 class="text-light mb-1"><?= htmlspecialchars($user['name'] ?? $user['email']) ?></h4>
-            <span class="badge bg-<?= can('badge.admin', $user) ? 'danger' : 'primary' ?> fs-6">
+            <span class="badge bg-<?= $isAdmin ? 'danger' : 'primary' ?> fs-6">
                 <?= htmlspecialchars($user['level_name']) ?>
             </span>
         </div>
@@ -50,8 +52,17 @@
 
                     <div class="mb-3">
                         <label class="form-label text-light">Nueva contraseña</label>
-                        <input type="password" name="password" class="form-control bg-dark text-light border-secondary"
-                               placeholder="Dejar vacío para no cambiarla">
+                        <div class="position-relative">
+                            <input type="password" name="password" id="profilePassword"
+                                   class="form-control bg-dark text-light border-secondary pe-5"
+                                   placeholder="Dejar vacío para no cambiarla">
+                            <button type="button"
+                                    class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"
+                                    onclick="togglePassword('profilePassword', this)" tabindex="-1"
+                                    aria-label="Mostrar u ocultar contraseña">
+                                Mostrar
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-warning w-100">Guardar Cambios</button>

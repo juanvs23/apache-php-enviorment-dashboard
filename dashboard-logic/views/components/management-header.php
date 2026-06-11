@@ -2,12 +2,13 @@
 /**
  * Header + Sidebar de gestión.
  * Variables: $tab — string 'usuarios' | 'proyectos' | 'levels'
+ *            $authUser — array usuario autenticado
+ *            $canManage — bool permiso users.manage
  *
  * Incluye verificación de acceso: solo usuarios con permiso 'users.manage'
  * pueden ver esta sección. Si no, redirige al dashboard.
  */
-$__mgmt_user = get_auth_user();
-if (!$__mgmt_user || !can('users.manage', $__mgmt_user)) {
+if (!$authUser || !$canManage) {
     header('Location: /');
     exit;
 }

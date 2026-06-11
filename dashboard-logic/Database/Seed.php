@@ -98,7 +98,7 @@ final class Seed
         }
 
         // ── User: admin@admin / Admin123 ───────────────────────────────
-        $email = 'admin@admin';
+        $email = 'admin@admin.com';
         $pass  = password_hash('Admin123', PASSWORD_BCRYPT);
 
         $pdo->prepare("
@@ -137,6 +137,6 @@ final class Seed
         echo "Seed complete:\n";
         echo "  - Levels: admin, client, operator, revisor\n";
         echo "  - 8 permissions seeded\n";
-        echo "  - Users: admin@admin, operator@test.com, revisor@test.com\n";
+        echo "  - Users: admin@admin.com, operator@test.com, revisor@test.com\n";
     }
 }

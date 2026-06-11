@@ -18,7 +18,7 @@
 
 ### Seed y migraciones
 
-- **Seed ampliado**: crea 4 niveles, 8 permisos, 3 usuarios (admin@admin, operator@test.com, revisor@test.com)
+- **Seed ampliado**: crea 4 niveles, 8 permisos, 3 usuarios (admin@admin.com, operator@test.com, revisor@test.com)
 - **SQL migration idempotente**: segura para producción, verifica `information_schema` antes de modificar
 - **`uk_level_name` UNIQUE KEY** en levels
 - **Limpieza de duplicados** en migración
@@ -39,7 +39,7 @@
 
 - **Migración MySQL**: reemplazo total de SQLite/AES por MySQL con tabla USERS y bcrypt
 - **Auto-migrate**: `Connection::get()` ejecuta `Migration::apply()` al conectar por primera vez
-- **Seed data**: `seed.php` crea nivel admin y usuario `admin@admin / Admin123`
+- **Seed data**: `seed.php` crea nivel admin y usuario `admin@admin.com / Admin123`
 - **Tabla Project**: `project_name`, `user_own` (NULL permite sin asignar), `acept_login` (TINYINT)
 - **Registro de `acept_login`** en `Migration.php`
 

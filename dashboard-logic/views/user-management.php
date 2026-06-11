@@ -56,7 +56,7 @@
                                 <div class="mb-2">
                                     <small class="text-secondary">Nivel</small>
                                     <div>
-                                        <span class="badge bg-<?= can('badge.admin', $u) ? 'danger' : 'primary' ?> fs-6">
+                                        <span class="badge bg-<?= $u['is_admin_badge'] ? 'danger' : 'primary' ?> fs-6">
                                             <?= htmlspecialchars($u['level_name']) ?>
                                         </span>
                                     </div>
@@ -100,8 +100,16 @@
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label text-light">Nueva contraseña</label>
-                                                <input type="password" name="password" class="form-control"
-                                                       placeholder="Vacío = sin cambios">
+                                                <div class="position-relative">
+                                                    <input type="password" name="password" id="editPassword-<?= htmlspecialchars($u['userID']) ?>"
+                                                           class="form-control pe-5" placeholder="Vacío = sin cambios">
+                                                    <button type="button"
+                                                            class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"
+                                                            onclick="togglePassword('editPassword-<?= htmlspecialchars($u['userID']) ?>', this)" tabindex="-1"
+                                                            aria-label="Mostrar u ocultar contraseña">
+                                                        Mostrar
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label text-light">Nivel</label>
@@ -146,7 +154,16 @@
                             </div>
                             <div class="col-12 col-md-3">
                                 <label class="form-label text-light">Contraseña</label>
-                                <input type="password" name="password" class="form-control" required>
+                                <div class="position-relative">
+                                    <input type="password" name="password" id="tabCreatePassword"
+                                           class="form-control pe-5" required>
+                                    <button type="button"
+                                            class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"
+                                            onclick="togglePassword('tabCreatePassword', this)" tabindex="-1"
+                                            aria-label="Mostrar u ocultar contraseña">
+                                        Mostrar
+                                    </button>
+                                </div>
                             </div>
                             <div class="col-12 col-md-2">
                                 <label class="form-label text-light">Nivel</label>
@@ -189,7 +206,16 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-light">Contraseña</label>
-                                <input type="password" name="password" class="form-control" required>
+                                <div class="position-relative">
+                                    <input type="password" name="password" id="createPassword"
+                                           class="form-control pe-5" required>
+                                    <button type="button"
+                                            class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"
+                                            onclick="togglePassword('createPassword', this)" tabindex="-1"
+                                            aria-label="Mostrar u ocultar contraseña">
+                                        Mostrar
+                                    </button>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-light">Nivel</label>
