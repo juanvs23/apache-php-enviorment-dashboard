@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dashboard\Presentation;
 
 use Dashboard\Infrastructure\Auth\AuthContext;
+use Dashboard\Infrastructure\Persistence\LegacyReader;
 use Dashboard\Presentation\Controller\AdminController;
 use Dashboard\Presentation\Controller\AuthController;
 use Dashboard\Presentation\Controller\DashboardController;
@@ -112,6 +113,8 @@ final class Router
                 ServiceContainer::get(\Dashboard\Application\UseCase\Project\SaveProjectUseCase::class),
                 ServiceContainer::get(\Dashboard\Application\UseCase\Project\DeleteProjectUseCase::class),
                 ServiceContainer::get(\Dashboard\Application\UseCase\Project\AssignProjectUseCase::class),
+                $this->authContext,
+                ServiceContainer::get(LegacyReader::class),
             );
 
             if ($tab === 'levels') {

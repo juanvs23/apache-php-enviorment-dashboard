@@ -26,6 +26,7 @@ use Dashboard\Application\UseCase\User\UpdateUserUseCase;
 use Dashboard\Database\Connection;
 use Dashboard\Infrastructure\Auth\AuthContext;
 use Dashboard\Infrastructure\Filesystem\ProjectScanner;
+use Dashboard\Infrastructure\Persistence\LegacyReader;
 use Dashboard\Infrastructure\Persistence\MySQLLevelRepository;
 use Dashboard\Infrastructure\Persistence\MySQLPermissionRepository;
 use Dashboard\Infrastructure\Persistence\MySQLProjectRepository;
@@ -113,6 +114,7 @@ final class ServiceContainer
             ProjectScanner::class          => fn() => new ProjectScanner(dirname(__DIR__, 2)),
             SessionManager::class          => fn() => new SessionManager(5, 900),
             AuthContext::class             => fn() => new AuthContext(),
+            LegacyReader::class            => fn() => new LegacyReader(),
 
             // ─── Repositories ──────────────────────────────────────
             UserRepositoryInterface::class => fn() => new MySQLUserRepository($pdo),

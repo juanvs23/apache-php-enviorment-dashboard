@@ -68,6 +68,7 @@ final class ProfileController
         }
 
         $user = $this->authContext->currentUser();
+        $isAdmin = $user ? $user['level_type'] === 0 : false;
         require __DIR__ . '/../../views/profile.php';
     }
 }

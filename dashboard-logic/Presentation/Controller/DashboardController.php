@@ -44,9 +44,13 @@ final class DashboardController
      * Renderiza el dashboard principal.
      *
      * Prepara las variables que necesita la vista `views/dashboard.php`:
-     *   - $projects     → array de proyectos enriquecidos con datos de DB
-     *   - $has_projects → bool si hay proyectos
-     *   - $script_name  → string para formularios
+     *   - $projects       → array de proyectos enriquecidos
+     *   - $has_projects   → bool si hay proyectos
+     *   - $script_name    → string para formularios
+     *   - $authUser       → usuario autenticado (array)
+     *   - $isAdmin        → bool si es admin
+     *   - $canManageUsers → bool permiso users.manage
+     *   - $canViewServer  → bool permiso server.view
      *
      * @param string $scriptName $_SERVER['SCRIPT_NAME']
      */
@@ -106,6 +110,11 @@ final class DashboardController
         }
 
         $has_projects = !empty($projects);
+
+        // ─── Auth data para la vista ────────────────────────────
+        $isAdmin        = $authUser && $authUser['level_type'] === 0;
+        $canManageUsers = $this->authContext->can('users.manage', $authUser);
+        $canViewServer  = $this->authContext->can('server.view', $authUser);
 
         require __DIR__ . '/../../views/dashboard.php';
     }

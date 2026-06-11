@@ -13,7 +13,6 @@
 
 require_once __DIR__ . '/dashboard-logic/bootstrap.php';
 require_once __DIR__ . '/dashboard-logic/helpers.php';
-require_once __DIR__ . '/dashboard-logic/auth.php';
 
 use Dashboard\Infrastructure\Auth\AuthContext;
 use Dashboard\Infrastructure\Session\SessionManager;

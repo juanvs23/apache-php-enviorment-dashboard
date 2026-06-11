@@ -16,6 +16,8 @@ use Dashboard\Application\UseCase\User\DeleteUserUseCase;
 use Dashboard\Application\UseCase\User\UpdateUserUseCase;
 use Dashboard\Domain\Entity\User;
 use Dashboard\Domain\ValueObject\Email;
+use Dashboard\Infrastructure\Auth\AuthContext;
+use Dashboard\Infrastructure\Persistence\LegacyReader;
 use Dashboard\Presentation\Controller\AdminController;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +35,8 @@ final class AdminControllerTest extends TestCase
     private SaveProjectUseCase $saveProject;
     private DeleteProjectUseCase $deleteProject;
     private AssignProjectUseCase $assignProject;
+    private AuthContext $authContext;
+    private LegacyReader $legacyReader;
     private AdminController $controller;
 
     protected function setUp(): void
@@ -47,6 +51,8 @@ final class AdminControllerTest extends TestCase
         $this->saveProject     = $this->createMock(SaveProjectUseCase::class);
         $this->deleteProject   = $this->createMock(DeleteProjectUseCase::class);
         $this->assignProject   = $this->createMock(AssignProjectUseCase::class);
+        $this->authContext     = $this->createMock(AuthContext::class);
+        $this->legacyReader    = $this->createMock(LegacyReader::class);
 
         $this->controller = new AdminController(
             $this->createLevel,
@@ -59,6 +65,8 @@ final class AdminControllerTest extends TestCase
             $this->saveProject,
             $this->deleteProject,
             $this->assignProject,
+            $this->authContext,
+            $this->legacyReader,
         );
 
         $_POST = [];
@@ -379,6 +387,17 @@ final class AdminControllerTest extends TestCase
         $this->createUser->method('execute')
             ->willThrowException(new \DomainException('Email is already in use'));
 
+        // Configurar mocks para que la vista no falle
+        $this->legacyReader->method('getAllUsers')->willReturn([]);
+        $this->legacyReader->method('getAllLevels')->willReturn([]);
+        $this->legacyReader->method('getAllProjects')->willReturn([]);
+        $this->legacyReader->method('getClientUsers')->willReturn([]);
+        $this->authContext->method('currentUser')->willReturn([
+            'userID' => 'admin-1', 'email' => 'admin@admin.com', 'name' => 'Admin',
+            'level' => 'lvl-1', 'level_name' => 'admin', 'level_type' => 0,
+        ]);
+        $this->authContext->method('can')->willReturn(true);
+
         $_GET['tab'] = 'usuarios';
         $_POST = [
             'action' => 'create_user',
@@ -387,13 +406,10 @@ final class AdminControllerTest extends TestCase
             'level'  => 'lvl-1',
         ];
 
-        // handleUsers() procesa el match() correctamente pero falla al require()
-        // las vistas porque get_auth_user() et al no están definidas en tests
-        try {
-            $this->controller->handleUsers();
-            self::fail('Expected error when views try to call undefined global functions');
-        } catch (\Error $e) {
-            self::assertStringContainsString('get_auth_user', $e->getMessage());
-        }
+        // handleUsers() atrapa la DomainException, setea $msg y $msg_type
+        // La vista renderiza normalmente en este contexto (no hay HTML shell)
+        $this->controller->handleUsers();
+        // Si llegamos acá sin excepción, el DomainException fue atrapado correctamente
+        self::assertTrue(true);
     }
 }

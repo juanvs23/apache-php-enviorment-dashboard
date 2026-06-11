@@ -15,6 +15,8 @@ use Dashboard\Application\UseCase\User\CreateUserUseCase;
 use Dashboard\Application\UseCase\User\DeleteUserUseCase;
 use Dashboard\Application\UseCase\User\UpdateUserUseCase;
 use Dashboard\Domain\Entity\User;
+use Dashboard\Infrastructure\Auth\AuthContext;
+use Dashboard\Infrastructure\Persistence\LegacyReader;
 
 /**
  * Controlador de administración.
@@ -23,10 +25,8 @@ use Dashboard\Domain\Entity\User;
  * desde la interfaz de administración del dashboard.
  *
  * Las operaciones de escritura (create/update/delete) se delegan
- * a Use Cases. Las lecturas para las vistas todavía usan las
- * funciones legacy (get_all_users, get_all_levels, etc.) para
- * mantener compatibilidad con el formato de arrays que esperan
- * los templates existentes.
+ * a Use Cases. Las lecturas para las vistas usan LegacyReader que
+ * devuelve arrays con el formato que esperan los templates.
  *
  * Rutas:
  *   GET  ?users=1              → handleUsers()   — gestión de usuarios y proyectos
@@ -45,6 +45,8 @@ final class AdminController
      * @param SaveProjectUseCase       $saveProject       Caso de uso para crear/actualizar proyectos
      * @param DeleteProjectUseCase     $deleteProject     Caso de uso para eliminar proyectos
      * @param AssignProjectUseCase     $assignProject     Caso de uso para asignar/desasignar proyectos
+     * @param AuthContext              $authContext       Contexto de autenticación
+     * @param LegacyReader             $legacyReader      Lector de datos legacy para vistas
      */
     public function __construct(
         private readonly CreateLevelUseCase $createLevel,
@@ -57,13 +59,15 @@ final class AdminController
         private readonly SaveProjectUseCase $saveProject,
         private readonly DeleteProjectUseCase $deleteProject,
         private readonly AssignProjectUseCase $assignProject,
+        private readonly AuthContext $authContext,
+        private readonly LegacyReader $legacyReader,
     ) {}
 
     /**
      * Maneja la gestión de usuarios y proyectos.
      *
-     * Procesa formularios POST usando Use Cases (create/update/delete user,
-     * create/update/delete/assign project) y prepara los datos para la vista.
+     * Procesa formularios POST usando Use Cases y prepara los datos
+     * para la vista usando LegacyReader.
      *
      * Variables que prepara para `views/user-management.php`:
      *   - $msg, $msg_type → resultado de la operación POST
@@ -72,11 +76,11 @@ final class AdminController
      *   - $levels         → lista de niveles
      *   - $projects       → lista de proyectos
      *   - $client_users   → usuarios tipo client
+     *   - $authUser       → usuario autenticado (para management-header)
+     *   - $canManage      → si tiene permiso users.manage
      */
     public function handleUsers(): void
     {
-        require_once __DIR__ . '/../../user-management.php';
-
         $msg      = '';
         $msg_type = 'success';
         $tab      = \trim($_GET['tab'] ?? 'usuarios');
@@ -104,10 +108,21 @@ final class AdminController
             $msg_type = $result['success'] ? 'success' : 'danger';
         }
 
-        $users        = \get_all_users();
-        $levels       = \get_all_levels();
-        $projects     = \get_all_projects();
-        $client_users = \get_client_users();
+        // ─── Datos para la vista ─────────────────────────────────
+        $users        = $this->legacyReader->getAllUsers();
+        $levels       = $this->legacyReader->getAllLevels();
+        $projects     = $this->legacyReader->getAllProjects();
+        $client_users = $this->legacyReader->getClientUsers();
+
+        // Enriquecer usuarios con badge.admin para la vista
+        foreach ($users as &$u) {
+            $u['is_admin_badge'] = $this->authContext->can('badge.admin', $u);
+        }
+        unset($u);
+
+        // Auth data para management-header.php
+        $authUser  = $this->authContext->currentUser();
+        $canManage = $authUser ? $this->authContext->can('users.manage', $authUser) : false;
 
         require __DIR__ . '/../../views/user-management.php';
     }
@@ -116,19 +131,18 @@ final class AdminController
      * Maneja la gestión de niveles y permisos.
      *
      * Procesa formularios POST usando CreateLevelUseCase, UpdateLevelUseCase
-     * y DeleteLevelUseCase (ya inyectados). Las lecturas para la vista
-     * todavía usan funciones legacy para mantener compatibilidad de formato.
+     * y DeleteLevelUseCase. Las lecturas usan LegacyReader.
      *
      * Prepara las variables que necesita la vista `views/level-management.php`:
      *   - $msg, $msg_type → resultado de la operación POST
      *   - $tab            → pestaña activa (siempre 'levels')
-     *   - $levels         → niveles con permisos (get_all_levels_with_perms)
-     *   - $permissions    → catálogo de permisos (get_all_permissions)
+     *   - $levels         → niveles con permisos
+     *   - $permissions    → catálogo de permisos
+     *   - $authUser       → usuario autenticado (para management-header)
+     *   - $canManage      → si tiene permiso users.manage
      */
     public function handleLevels(): void
     {
-        require_once __DIR__ . '/../../level-management.php';
-
         $msg      = '';
         $msg_type = 'success';
         $tab      = 'levels';
@@ -152,8 +166,13 @@ final class AdminController
             $msg_type = $result['success'] ? 'success' : 'danger';
         }
 
-        $levels      = \get_all_levels_with_perms();
-        $permissions = \get_all_permissions();
+        // ─── Datos para la vista ─────────────────────────────────
+        $levels      = $this->legacyReader->getAllLevelsWithPerms();
+        $permissions = $this->legacyReader->getAllPermissions();
+
+        // Auth data para management-header.php
+        $authUser  = $this->authContext->currentUser();
+        $canManage = $authUser ? $this->authContext->can('users.manage', $authUser) : false;
 
         require __DIR__ . '/../../views/level-management.php';
     }

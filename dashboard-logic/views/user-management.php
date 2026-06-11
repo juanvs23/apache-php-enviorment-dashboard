@@ -56,7 +56,7 @@
                                 <div class="mb-2">
                                     <small class="text-secondary">Nivel</small>
                                     <div>
-                                        <span class="badge bg-<?= can('badge.admin', $u) ? 'danger' : 'primary' ?> fs-6">
+                                        <span class="badge bg-<?= $u['is_admin_badge'] ? 'danger' : 'primary' ?> fs-6">
                                             <?= htmlspecialchars($u['level_name']) ?>
                                         </span>
                                     </div>
