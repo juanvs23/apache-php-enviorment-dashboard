@@ -50,8 +50,17 @@
 
                     <div class="mb-3">
                         <label class="form-label text-light">Nueva contraseña</label>
-                        <input type="password" name="password" class="form-control bg-dark text-light border-secondary"
-                               placeholder="Dejar vacío para no cambiarla">
+                        <div class="position-relative">
+                            <input type="password" name="password" id="profilePassword"
+                                   class="form-control bg-dark text-light border-secondary pe-5"
+                                   placeholder="Dejar vacío para no cambiarla">
+                            <button type="button"
+                                    class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"
+                                    onclick="togglePassword('profilePassword', this)" tabindex="-1"
+                                    aria-label="Mostrar u ocultar contraseña">
+                                Mostrar
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-warning w-100">Guardar Cambios</button>

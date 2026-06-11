@@ -298,7 +298,7 @@ php seed.php
 ```
 
 Esto crea las tablas (auto-migrate) y el usuario por defecto:
-- **Email:** admin@admin
+- **Email:** admin@admin.com
 - **Contraseña:** Admin123
 
 > ⚠️ **Cambiá esta contraseña después del primer login.**

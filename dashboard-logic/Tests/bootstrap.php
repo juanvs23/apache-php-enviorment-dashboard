@@ -5,9 +5,13 @@ declare(strict_types=1);
 /**
  * Bootstrap para tests unitarios y de integración.
  *
- * Carga el autoload PSR-4 manual (sin depender de Composer vendor/)
- * y carga las variables de entorno para la conexión a MySQL.
+ * Carga el autoload PSR-4 manual, variables de entorno para MySQL,
+ * y registra BypassFinals para poder mockear clases final.
  */
+
+// ─── BypassFinals: permite mockear Use Cases declarados como final ──────────
+require_once __DIR__ . '/../vendor/autoload.php';
+DG\BypassFinals::enable();
 
 // ─── Cargar .env manualmente ────────────────────────────────────────────────
 $envFile = __DIR__ . '/../../.env';

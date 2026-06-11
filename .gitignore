@@ -35,6 +35,12 @@
 # ─── Git ──────────────────────────────────────────────────────────────────
 !.gitignore
 
+# ─── Composer (dev dependencies, PHPUnit + BypassFinals) ──────────────────
+dashboard-logic/vendor/
+
+# ─── PHPUnit cache ────────────────────────────────────────────────────────
+dashboard-logic/.phpunit.cache/
+
 # ─── NO trackear el .env real con credenciales ────────────────────────────
 .env
 
