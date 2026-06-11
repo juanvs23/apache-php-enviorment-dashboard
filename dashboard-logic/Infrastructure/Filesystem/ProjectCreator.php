@@ -103,7 +103,8 @@ final class ProjectCreator
             throw new \RuntimeException("El directorio '{$directory}' ya existe");
         }
 
-        $cmd = sprintf('git clone %s %s', escapeshellarg($repoUrl), escapeshellarg($targetDir));
+        $cmd = sprintf('GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone %s %s',
+            escapeshellarg($repoUrl), escapeshellarg($targetDir));
         if ($branch !== null && $branch !== '') {
             $cmd .= sprintf(' --branch %s', escapeshellarg($branch));
         }
