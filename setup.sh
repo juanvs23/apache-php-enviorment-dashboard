@@ -243,13 +243,52 @@ case "$PKG" in
 esac
 
 # ══════════════════════════════════════════════════════════════════════
-# 3. Instalar Node.js (para proyectos HTML con Vite.js)
+# 3. Instalar Git + Node.js (para crear proyectos desde el dashboard)
 # ══════════════════════════════════════════════════════════════════════
-step "3. Instalando Node.js (LTS)"
-explain "Node.js se usa para crear proyectos HTML modernos con Vite.js."
-explain "  • Vite.js = bundler rápido con HMR (Hot Module Replacement)"
-explain "  • Solo se necesita si vas a usar la opción 'Usar Vite.js' al crear proyectos HTML."
+step "3. Instalando Git + Node.js (LTS)"
+explain "Estas herramientas se usan para crear proyectos desde el dashboard."
+explain "  • Git = clonar repositorios (opción 'Clonar desde GitHub')"
+explain "  • Node.js + npm = proyectos con Vite.js (opción 'Usar Vite.js')"
 
+# ─── Git ────────────────────────────────────────────────────────────
+if command -v git &>/dev/null; then
+    GIT_VERSION=$(git --version 2>/dev/null || echo "desconocida")
+    info "Git ya instalado: $GIT_VERSION"
+else
+    warn "Git no encontrado — instalando..."
+    case "$PKG" in
+        apt)
+            sudo apt-get install -y -qq git 2>/dev/null \
+                && info "Git instalado" \
+                || warn "No se pudo instalar Git — instalalo manual: https://git-scm.com"
+            ;;
+        dnf|yum)
+            if [[ "$PKG" == "dnf" ]]; then
+                sudo dnf install -y git 2>/dev/null && info "Git instalado via dnf" \
+                    || warn "No se pudo instalar Git"
+            else
+                sudo yum install -y git 2>/dev/null && info "Git instalado via yum" \
+                    || warn "No se pudo instalar Git"
+            fi
+            ;;
+        pacman)
+            sudo pacman -Sy --noconfirm git 2>/dev/null \
+                && info "Git instalado via pacman" \
+                || warn "No se pudo instalar Git"
+            ;;
+        zypper)
+            sudo zypper install -y git 2>/dev/null \
+                && info "Git instalado via zypper" \
+                || warn "No se pudo instalar Git"
+            ;;
+        *)
+            warn "Gestor de paquetes no reconocido. Instalá Git manualmente:"
+            warn "  https://git-scm.com/downloads"
+            ;;
+    esac
+fi
+
+# ─── Node.js ────────────────────────────────────────────────────────
 if command -v node &>/dev/null; then
     NODE_CURRENT=$(node --version 2>/dev/null || echo "none")
     info "Node.js ya instalado: $NODE_CURRENT"

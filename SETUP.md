@@ -38,12 +38,29 @@ tokenizer    → Laravel
 
 | Componente | Versión mínima | Para qué |
 |-----------|:---:|----------|
+| Git | 2.30+ | Clonar repositorios desde GitHub al crear proyectos |
 | Node.js | 22.x / 24.x LTS | Crear proyectos HTML con Vite.js (HMR, bundler moderno) |
 | npm | 9.x+ | Gestor de paquetes de Node.js |
 
-> **Nota:** Node.js solo es necesario si vas a usar la opción **"Usar Vite.js"** al crear proyectos HTML desde el dashboard. Para proyectos estáticos sin bundler, no hace falta.
+> **Nota:** Git solo es necesario si vas a usar **"Clonar desde GitHub"**. Node.js solo para **"Usar Vite.js"**. Para proyectos estáticos sin bundler ni clone, no hacen falta.
 
-**Instalación de Node.js por SO:**
+**Instalación de Git:**
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install -y git
+
+# Fedora/RHEL
+sudo dnf install -y git
+
+# Arch Linux
+sudo pacman -Sy git
+
+# macOS (Homebrew) — ya viene instalado con Xcode CLI Tools
+# Windows: https://git-scm.com/downloads
+```
+
+**Instalación de Node.js:**
 
 ```bash
 # Ubuntu/Debian — via NodeSource (LTS)
