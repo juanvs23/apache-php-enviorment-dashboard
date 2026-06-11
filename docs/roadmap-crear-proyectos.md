@@ -91,21 +91,33 @@ Pestaña "Nuevo Proyecto"
 - [x] Confirmación antes de detener (`onsubmit="return confirm(...)"`)
 - [x] Limpiar PID file si el proceso ya murió
 
-### 🔲 Fase 5 — Backend: Laravel
+### ✅ Fase 5 — Backend: Laravel
 
-- [ ] `ProjectCreator::createLaravel()` — `composer create-project laravel/laravel`
-- [ ] Crear base de datos MySQL (`CREATE DATABASE`)
-- [ ] Configurar `.env` con credenciales
-- [ ] Crear `user-data.txt` con `type: laravel`
-- [ ] Handler en `index.php` para `POST /?create_project=laravel`
+- [x] `ProjectCreator::createLaravel()` — `composer create-project laravel/laravel`
+- [x] `ProjectCreator::createDatabase()` vía PDO
+- [x] Configurar `.env` con DB_USER / DB_PASS
+- [x] `user-data.txt` con `type: laravel`
+- [x] Handler en `index.php` para `POST /?create_project=laravel`
+- [x] Modal con tabs Desde cero / Clonar GitHub
+- [x] `COMPOSER_HOME=/tmp/composer` para www-data
 
-### 🔲 Fase 6 — Backend: WordPress
+### ✅ Fase 6 — Backend: WordPress
 
-- [ ] `ProjectCreator::createWordpress()` — WP-CLI `wp core download`
-- [ ] Crear base de datos MySQL
-- [ ] `wp config create` + `wp core install`
-- [ ] Crear `user-data.txt` con `type: wordpress`
-- [ ] Handler en `index.php` para `POST /?create_project=wordpress`
+- [x] `ProjectCreator::createWordpress()` — `wp core download` + `wp config create` + `wp core install`
+- [x] `ProjectCreator::createDatabase()` vía PDO (reutilizado)
+- [x] `define('FS_METHOD', 'direct')` en wp-config.php
+- [x] `user-data.txt` con `type: wordpress`, user y password
+- [x] Handler en `index.php` para `POST /?create_project=wordpress`
+- [x] Creación completa en ~4 segundos
+
+### ✅ Fase 6.5 — Gestión de proyectos
+
+- [x] Botón 🗑 Eliminar proyecto en card header
+- [x] Handler `?delete_project=dir` con validación de seguridad
+- [x] Mata Vite antes de borrar si está corriendo
+- [x] `chmod -R 0777` en todos los proyectos creados
+- [x] `git init` automático en todo proyecto nuevo
+- [x] `.htaccess` con proxy reverso a Vite (solo si `use_vite`)
 
 ### 🔲 Fase 7 — Testing
 
