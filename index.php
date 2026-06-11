@@ -79,6 +79,14 @@ if ($authenticated) {
         .card:hover {
             box-shadow: 1px 3px 6px rgba(0,0,0,.5) !important;
         }
+        .new-project-card {
+            cursor: pointer;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .new-project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,.4) !important;
+        }
         .nav-tabs .nav-link {
             color: #8b949e;
             border: none;
