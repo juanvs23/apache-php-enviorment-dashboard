@@ -180,6 +180,11 @@ final class ProjectCreator
             throw new \RuntimeException('Error al crear wp-config.php: ' . implode("\n", $output));
         }
 
+        // Añadir FS_METHOD direct para evitar FTP en updates
+        file_put_contents($targetDir . '/wp-config.php',
+            "\n/** Permitir escritura directa sin FTP */\ndefine('FS_METHOD', 'direct');\n",
+            FILE_APPEND);
+
         // Instalar WordPress
         $cmd = sprintf('cd %s && wp core install --url=http://localhost/%s --title=%s --admin_user=admin --admin_email=%s --admin_password=%s --path=%s 2>&1',
             escapeshellarg($targetDir), escapeshellarg($directory), escapeshellarg($siteTitle),
