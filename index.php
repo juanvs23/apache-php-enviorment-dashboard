@@ -172,6 +172,33 @@ if (isset($_GET['create_project']) && $_GET['create_project'] === 'html' && $_SE
         exit;
     }
 }
+// ─── Eliminar proyecto (solo admin) ────────────────────────────────────────
+if (isset($_GET['delete_project']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $delDir = $_GET['delete_project'] ?? '';
+    if ($authenticated && $isAdmin && $delDir !== '') {
+        $projectDir = realpath(__DIR__ . '/' . $delDir);
+        $valid = $projectDir && is_dir($projectDir)
+                 && str_starts_with($projectDir, realpath(__DIR__) ?: '')
+                 && $delDir !== 'dashboard-logic' && $delDir !== 'assets';
+        if ($valid) {
+            // Detener Vite si está corriendo
+            $pidFile = $projectDir . '/.pid';
+            if (file_exists($pidFile)) {
+                $pid = (int) file_get_contents($pidFile);
+                if ($pid > 0) { exec("kill {$pid} 2>/dev/null"); }
+            }
+            exec(sprintf('rm -rf %s 2>&1', escapeshellarg($projectDir)), $out, $code);
+            $t = $code === 0 ? 'success' : 'danger';
+            $m = $code === 0 ? '🗑 Proyecto eliminado' : 'Error: ' . implode(' | ', $out);
+        } else {
+            $t = 'danger'; $m = 'No se puede eliminar este directorio';
+        }
+    } else {
+        $t = 'danger'; $m = 'No autorizado';
+    }
+    header("Location: /?flash={$t}&msg=" . urlencode($m));
+    exit;
+}
 // ─── Login via AuthController ──────────────────────────────────────────────
 $isLoginAttempt = ($_POST['email'] ?? '') !== '' && ($_POST['password'] ?? '') !== '';
 

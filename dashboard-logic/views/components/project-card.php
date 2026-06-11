@@ -75,6 +75,13 @@
                     <code class="small" style="color: #e4e6eb;"><?= htmlspecialchars($project['password']) ?></code>
                 </div>
             <?php endif; ?>
+
+            <div class="mt-2 pt-2 border-top border-secondary text-end">
+                <form method="post" action="?delete_project=<?= urlencode($project['dir']) ?>" class="d-inline"
+                      onsubmit="return confirm('¿Eliminar el proyecto <?= htmlspecialchars($project['name']) ?>? Esta acción NO se puede deshacer.')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger px-2">🗑 Borrar</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
