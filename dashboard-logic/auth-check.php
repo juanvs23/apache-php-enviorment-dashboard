@@ -7,7 +7,10 @@
  *
  * URLs/Bots permitidos sin auth:
  *   - index.php, dashboard-logic/wp-auto-login.php, assets/
- *   - Google PageSpeed / Lighthouse
+ *   - Google PageSpeed / Lighthouse / GTmetrix (bypass)
+ *
+ * Bots bloqueados explícitamente (403):
+ *   - Crawlers de indexación (Googlebot, Bingbot, etc.)
  */
 
 require_once __DIR__ . '/env-loader.php';
@@ -32,7 +35,20 @@ if (
     return;
 }
 
-// ─── Auth por cookie + DB ───────────────────────────────────────────────
+// ─── Bloquear bots de indexación explícitamente ─────────────────────────
+$__crawlers = [
+    'Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider',
+    'YandexBot', 'Sogou', 'Exabot', 'facebot', 'ia_archiver',
+    'Bytespider', 'PetalBot', 'SemrushBot', 'AhrefsBot', 'DotBot',
+    'MJ12bot', 'SeznamBot', 'BLEXBot', 'Amazonbot', 'Applebot',
+    'rogerbot', 'spider', 'crawler', 'Crawler',
+];
+foreach ($__crawlers as $__bot) {
+    if (str_contains($__ua, $__bot)) {
+        header('HTTP/1.1 403 Forbidden');
+        exit;
+    }
+}
 $__cookie  = $_COOKIE['project_user'] ?? '';
 $__userID  = $__cookie !== '' ? base64_decode($__cookie, true) : false;
 $__authed  = false;
