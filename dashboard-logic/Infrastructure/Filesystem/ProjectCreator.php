@@ -132,7 +132,73 @@ final class ProjectCreator
     }
 
     /**
-     * Crea una base de datos MySQL si no existe.
+     * Crea un proyecto WordPress desde cero.
+     *
+     * @param string $projectName   Nombre descriptivo
+     * @param string $directory     Nombre del directorio
+     * @param string $dbName        Nombre de la base de datos
+     * @param string $siteTitle     Título del sitio
+     * @param string $adminEmail    Email del admin
+     * @param string $adminPassword Contraseña del admin
+     * @return string Ruta absoluta del directorio creado
+     * @throws \RuntimeException Si falla WP-CLI o la DB
+     */
+    public function createWordpress(
+        string $projectName,
+        string $directory,
+        string $dbName,
+        string $siteTitle,
+        string $adminEmail,
+        string $adminPassword,
+    ): string {
+        $targetDir = $this->rootPath . '/' . $directory;
+
+        if (is_dir($targetDir)) {
+            exec(sprintf('rm -rf %s', escapeshellarg($targetDir)));
+        }
+
+        $dbUser = $_ENV['DB_USER'] ?? 'juanvs23';
+        $dbPass = $_ENV['DB_PASS'] ?? '';
+
+        // Crear base de datos
+        $this->createDatabase($dbName);
+
+        // Descargar WordPress
+        $cmd = sprintf('cd %s && wp core download --path=%s 2>&1',
+            escapeshellarg($this->rootPath), escapeshellarg($directory));
+        $output = []; $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+        if ($exitCode !== 0) {
+            throw new \RuntimeException('Error al descargar WordPress: ' . implode("\n", $output));
+        }
+
+        // Crear wp-config.php
+        $cmd = sprintf('cd %s && wp config create --dbname=%s --dbuser=%s --dbpass=%s --path=%s 2>&1',
+            escapeshellarg($targetDir), escapeshellarg($dbName), escapeshellarg($dbUser), escapeshellarg($dbPass), escapeshellarg($targetDir));
+        exec($cmd, $output, $exitCode);
+        if ($exitCode !== 0) {
+            throw new \RuntimeException('Error al crear wp-config.php: ' . implode("\n", $output));
+        }
+
+        // Instalar WordPress
+        $cmd = sprintf('cd %s && wp core install --url=http://localhost/%s --title=%s --admin_user=admin --admin_email=%s --admin_password=%s --path=%s 2>&1',
+            escapeshellarg($targetDir), escapeshellarg($directory), escapeshellarg($siteTitle),
+            escapeshellarg($adminEmail), escapeshellarg($adminPassword), escapeshellarg($targetDir));
+        exec($cmd, $output, $exitCode);
+        if ($exitCode !== 0) {
+            throw new \RuntimeException('Error al instalar WordPress: ' . implode("\n", $output));
+        }
+
+        // Metadatos + git
+        file_put_contents($targetDir . '/user-data.txt', "type: wordpress\nname: {$projectName}\nuser: admin\npassword: {$adminPassword}\n");
+        exec(sprintf('cd %s && git init 2>&1', escapeshellarg($targetDir)));
+        exec(sprintf('chmod -R 0777 %s', escapeshellarg($targetDir)));
+
+        return $targetDir;
+    }
+
+    /**
+     * Crea un proyecto HTML vanilla (sin bundler).
      */
     private function createDatabase(string $dbName): void
     {

@@ -132,7 +132,7 @@ if (isset($_GET['npm_action']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ─── Crear proyecto HTML (solo admin autenticado) ──────────────────────────
-if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html', 'laravel']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html', 'laravel', 'wordpress']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($authenticated && $isAdmin) {
         $name = trim($_POST['project_name'] ?? '');
         $dir  = trim($_POST['directory'] ?? '');
@@ -165,8 +165,7 @@ if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html',
                 $creator->createHtml($name, $dir, $useVite);
                 $viteMsg = $useVite ? ' con Vite.js' : '';
                 header("Location: /?flash=success&msg=" . urlencode("Proyecto creado: {$name}{$viteMsg}"));
-            } else {
-                // Laravel desde cero
+            } elseif ($_GET['create_project'] === 'laravel') {
                 $dbName = trim($_POST['db_name'] ?? '');
                 if ($dbName === '') {
                     header("Location: /?flash=danger&msg=" . urlencode('El nombre de la base de datos es requerido'));
@@ -174,6 +173,17 @@ if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html',
                 }
                 $creator->createLaravel($name, $dir, $dbName);
                 header("Location: /?flash=success&msg=" . urlencode("Proyecto Laravel creado: {$name}"));
+            } elseif ($_GET['create_project'] === 'wordpress') {
+                $dbName    = trim($_POST['db_name'] ?? '');
+                $title     = trim($_POST['site_title'] ?? '');
+                $wpEmail   = trim($_POST['admin_email'] ?? '');
+                $wpPass    = $_POST['admin_password'] ?? '';
+                if ($dbName === '' || $title === '' || $wpEmail === '' || $wpPass === '') {
+                    header("Location: /?flash=danger&msg=" . urlencode('Todos los campos son requeridos'));
+                    exit;
+                }
+                $creator->createWordpress($name, $dir, $dbName, $title, $wpEmail, $wpPass);
+                header("Location: /?flash=success&msg=" . urlencode("Proyecto WordPress creado: {$name}"));
             }
         } catch (\RuntimeException $e) {
             header("Location: /?flash=danger&msg=" . urlencode($e->getMessage()));
