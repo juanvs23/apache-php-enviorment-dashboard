@@ -13,6 +13,18 @@
             </div>
             <form method="post" action="/?create_project=laravel">
                 <div class="modal-body">
+                    <!-- ─── Tabs ────────────────────────────────── -->
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab"
+                                    data-bs-target="#laravelTabScratch" type="button" role="tab">🆕 Desde cero</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#laravelTabGithub" type="button" role="tab">📥 Clonar desde GitHub</button>
+                        </li>
+                    </ul>
+                    <!-- ─── Campos comunes ─────────────────────── -->
                     <div class="mb-3">
                         <label class="form-label text-light">Nombre del proyecto</label>
                         <input type="text" name="project_name" class="form-control bg-dark text-light border-secondary"
@@ -28,9 +40,31 @@
                         <input type="text" name="db_name" class="form-control bg-dark text-light border-secondary"
                                placeholder="ej: laravel_db" required>
                     </div>
-                    <div class="alert alert-info small mb-0">
-                        <strong>Se instalará:</strong> Laravel vía Composer, <code>.env</code> configurado,
-                        migraciones iniciales, y <code>user-data.txt</code> para el dashboard.
+                    <!-- ─── Tab panes ─────────────────────────────── -->
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="laravelTabScratch" role="tabpanel">
+                            <div class="alert alert-info small mb-0">
+                                <strong>Se instalará:</strong> Laravel vía Composer, <code>.env</code> configurado,
+                                migraciones iniciales, y <code>user-data.txt</code>.
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="laravelTabGithub" role="tabpanel">
+                            <div class="mb-3">
+                                <label class="form-label text-light">URL del repositorio</label>
+                                <input type="text" name="repo_url" class="form-control bg-dark text-light border-secondary"
+                                       placeholder="https://github.com/usuario/repo.git">
+                                <small class="text-secondary">Solo HTTPS. Repositorios públicos.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-light">Rama (opcional)</label>
+                                <input type="text" name="branch" class="form-control bg-dark text-light border-secondary"
+                                       placeholder="main">
+                            </div>
+                            <div class="alert alert-info small mb-0">
+                                <strong>Se hará:</strong> <code>git clone</code>, <code>composer install</code>,
+                                <code>.env</code> con la DB indicada, y <code>user-data.txt</code>.
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-secondary">

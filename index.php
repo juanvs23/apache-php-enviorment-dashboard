@@ -132,7 +132,7 @@ if (isset($_GET['npm_action']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ─── Crear proyecto HTML (solo admin autenticado) ──────────────────────────
-if (isset($_GET['create_project']) && $_GET['create_project'] === 'html' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html', 'laravel']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($authenticated && $isAdmin) {
         $name = trim($_POST['project_name'] ?? '');
         $dir  = trim($_POST['directory'] ?? '');
@@ -161,10 +161,13 @@ if (isset($_GET['create_project']) && $_GET['create_project'] === 'html' && $_SE
             if ($repo !== '') {
                 $creator->createFromGithub($name, $dir, $repo, $branch);
                 header("Location: /?flash=success&msg=" . urlencode("Proyecto clonado: {$name}"));
-            } else {
+            } elseif ($_GET['create_project'] === 'html') {
                 $creator->createHtml($name, $dir, $useVite);
                 $viteMsg = $useVite ? ' con Vite.js' : '';
                 header("Location: /?flash=success&msg=" . urlencode("Proyecto creado: {$name}{$viteMsg}"));
+            } else {
+                header("Location: /?flash=info&msg=" . urlencode('Creación desde cero para Laravel próximamente. Usá Clonar desde GitHub.'));
+                exit;
             }
         } catch (\RuntimeException $e) {
             header("Location: /?flash=danger&msg=" . urlencode($e->getMessage()));
