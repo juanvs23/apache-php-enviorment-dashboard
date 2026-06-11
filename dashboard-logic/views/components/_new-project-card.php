@@ -11,7 +11,7 @@
  *   ]
  */
 ?>
-<div class="col-12 col-md-5">
+<div class="col-12 col-md-5 col-lg-4 col-xl-3">
     <div class="card bg-dark border-secondary h-100 shadow-sm new-project-card"
          role="button" data-bs-toggle="modal" data-bs-target="#<?= $type['modal'] ?>">
         <div class="card-body text-center py-4">
