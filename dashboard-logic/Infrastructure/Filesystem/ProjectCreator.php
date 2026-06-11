@@ -95,7 +95,7 @@ final class ProjectCreator
         $targetDir = $this->rootPath . '/' . $directory;
 
         if (is_dir($targetDir)) {
-            throw new \RuntimeException("El directorio '{$directory}' ya existe");
+            exec(sprintf('rm -rf %s', escapeshellarg($targetDir)));
         }
 
         // Crear proyecto con Composer (en background, puede tardar ~60s)
