@@ -50,9 +50,9 @@
                         <div class="tab-pane fade" id="htmlTabGithub" role="tabpanel">
                             <div class="mb-3">
                                 <label class="form-label text-light">URL del repositorio</label>
-                                <input type="url" name="repo_url" class="form-control bg-dark text-light border-secondary"
+                                <input type="text" name="repo_url" class="form-control bg-dark text-light border-secondary"
                                        placeholder="https://github.com/usuario/repo.git">
-                                <small class="text-secondary">HTTPS o SSH. Se hará <code>git clone</code>.</small>
+                                <small class="text-secondary">HTTPS o SSH. Ej: <code>git@github.com:usuario/repo.git</code></small>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-light">Rama (opcional)</label>
