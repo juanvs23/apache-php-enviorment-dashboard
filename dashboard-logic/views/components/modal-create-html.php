@@ -43,8 +43,8 @@
                                 </small>
                             </div>
                             <div class="alert alert-info small mb-0">
-                                <strong>Se creará:</strong> <code>index.html</code>, <code>assets/css/style.css</code>,
-                                y <code>user-data.txt</code>.
+                                <strong>Se creará:</strong> <code>index.html</code>, <code>assets/css/styles.css</code>,
+                                <code>assets/js/main.js</code>, <code>assets/images/</code>, <code>.gitignore</code> y <code>user-data.txt</code>.
                             </div>
                         </div>
                         <div class="tab-pane fade" id="htmlTabGithub" role="tabpanel">

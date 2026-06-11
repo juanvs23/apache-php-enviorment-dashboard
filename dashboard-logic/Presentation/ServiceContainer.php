@@ -25,6 +25,7 @@ use Dashboard\Application\UseCase\User\ListUsersUseCase;
 use Dashboard\Application\UseCase\User\UpdateUserUseCase;
 use Dashboard\Database\Connection;
 use Dashboard\Infrastructure\Auth\AuthContext;
+use Dashboard\Infrastructure\Filesystem\ProjectCreator;
 use Dashboard\Infrastructure\Filesystem\ProjectScanner;
 use Dashboard\Infrastructure\Persistence\LegacyReader;
 use Dashboard\Infrastructure\Persistence\MySQLLevelRepository;
@@ -112,6 +113,7 @@ final class ServiceContainer
         self::$factories = [
             // ─── Infrastructure ────────────────────────────────────
             ProjectScanner::class          => fn() => new ProjectScanner(dirname(__DIR__, 2)),
+            ProjectCreator::class          => fn() => new ProjectCreator(dirname(__DIR__, 2)),
             SessionManager::class          => fn() => new SessionManager(5, 900),
             AuthContext::class             => fn() => new AuthContext(),
             LegacyReader::class            => fn() => new LegacyReader(),

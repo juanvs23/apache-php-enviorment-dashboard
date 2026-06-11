@@ -59,6 +59,13 @@ $newProjectTypes = [
 
 <section class="py-4 container-fluid" style="min-height: calc(100vh - 56px); background: linear-gradient(135deg, #1a1d23 0%, #2d323e 100%);">
 
+    <?php $flash = $_GET['flash'] ?? ''; $flashMsg = $_GET['msg'] ?? ''; if ($flash): ?>
+    <div class="alert alert-<?= htmlspecialchars($flash) ?> alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($flashMsg) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <?php endif; ?>
+
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabProyectos" type="button">📁 Proyectos</button>

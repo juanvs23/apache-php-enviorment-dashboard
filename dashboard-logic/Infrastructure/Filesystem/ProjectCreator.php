@@ -56,6 +56,29 @@ final class ProjectCreator
         // user-data.txt para el dashboard
         file_put_contents($targetDir . '/user-data.txt', "type: html\nname: {$projectName}\n");
 
+        // Inicializar git (idempotente, no falla si ya existe)
+        $gitOut = []; $gitCode = 0;
+        exec(sprintf('cd %s && git init 2>&1', escapeshellarg($targetDir)), $gitOut, $gitCode);
+
+        // .gitignore para proyectos vanilla (Vite ya tiene el suyo)
+        if (!file_exists($targetDir . '/.gitignore')) {
+            file_put_contents($targetDir . '/.gitignore', "node_modules/\ndist/\n.env\n.DS_Store\n");
+        }
+
+        // .htaccess con proxy reverso para Vite
+        if ($useVite) {
+            file_put_contents($targetDir . '/.htaccess', implode("\n", [
+                '<IfModule mod_rewrite.c>',
+                'RewriteEngine On',
+                '# Proxy a Vite dev server (puerto 5173) — solo si el archivo no existe en disco',
+                'RewriteCond %{REQUEST_FILENAME} !-f',
+                'RewriteCond %{REQUEST_FILENAME} !-d',
+                'RewriteRule ^(.*)$ http://127.0.0.1:5173/$1 [P,L]',
+                '</IfModule>',
+                '',
+            ]));
+        }
+
         return $targetDir;
     }
 
@@ -114,14 +137,15 @@ final class ProjectCreator
      */
     private function createVanillaProject(string $targetDir, string $projectName): void
     {
-        // assets/css/
+        // Estructura de directorios
         mkdir($targetDir . '/assets/css', 0755, true);
+        mkdir($targetDir . '/assets/js', 0755, true);
+        mkdir($targetDir . '/assets/images', 0755, true);
 
-        // index.html
+        // Archivos
         file_put_contents($targetDir . '/index.html', $this->vanillaHtmlTemplate($projectName));
-
-        // assets/css/style.css
-        file_put_contents($targetDir . '/assets/css/style.css', $this->vanillaCssTemplate());
+        file_put_contents($targetDir . '/assets/css/styles.css', $this->vanillaCssTemplate());
+        file_put_contents($targetDir . '/assets/js/main.js', $this->vanillaJsTemplate());
     }
 
     /**
@@ -167,12 +191,12 @@ final class ProjectCreator
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>{$title}</title>
-            <link rel="stylesheet" href="assets/css/style.css">
+            <link rel="stylesheet" href="assets/css/styles.css">
         </head>
         <body>
             <h1>{$title}</h1>
             <p>Proyecto creado con Dev Dashboard.</p>
-            <script src="assets/js/app.js"></script>
+            <script src="assets/js/main.js"></script>
         </body>
         </html>
         HTML;
@@ -209,6 +233,15 @@ final class ProjectCreator
             margin-top: 0.5rem;
         }
         CSS;
+    }
+
+    private function vanillaJsTemplate(): string
+    {
+        return <<<'JS'
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Proyecto listo');
+        });
+        JS;
     }
 
     private function viteHtmlTemplate(string $title): string

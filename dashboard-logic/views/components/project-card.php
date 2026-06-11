@@ -40,6 +40,28 @@
                 <?php endif; ?>
             <?php endif; ?>
 
+            <?php if ($project['has_node']): ?>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <span class="badge bg-warning bg-opacity-10 text-warning small px-2 py-1">📦 Node.js</span>
+                    <?php if ($project['has_pid']): ?>
+                    <a target="_blank" href="/<?= urlencode($project['dir']) ?>" class="btn btn-sm btn-info px-2">🔗 Dev</a>
+                    <form method="post" action="?npm_action=stop&dir=<?= urlencode($project['dir']) ?>" class="d-inline"
+                          onsubmit="return confirm('¿Detener el servidor?');">
+                        <button type="submit" class="btn btn-sm btn-danger px-2">⏹ Detener</button>
+                    </form>
+                    <?php else: ?>
+                    <form method="post" action="?npm_action=install&dir=<?= urlencode($project['dir']) ?>" class="d-inline"
+                          onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='⏳';">
+                        <button type="submit" class="btn btn-sm btn-warning px-2">📦 Instalar</button>
+                    </form>
+                    <form method="post" action="?npm_action=start&dir=<?= urlencode($project['dir']) ?>" class="d-inline"
+                          onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='⏳';">
+                        <button type="submit" class="btn btn-sm btn-success px-2">🚀 Iniciar</button>
+                    </form>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
             <?php if ($project['user']): ?>
                 <div class="d-flex align-items-center gap-2 mt-2 pt-2 border-top border-secondary">
                     <span class="text-muted small">👤</span>
