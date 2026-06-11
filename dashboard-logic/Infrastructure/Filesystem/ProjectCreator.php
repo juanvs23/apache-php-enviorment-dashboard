@@ -202,11 +202,18 @@ final class ProjectCreator
      */
     private function createDatabase(string $dbName): void
     {
+        $host = $_ENV['DB_HOST'] ?? 'localhost';
+        $port = $_ENV['DB_PORT'] ?? '3306';
         $user = $_ENV['DB_USER'] ?? 'juanvs23';
         $pass = $_ENV['DB_PASS'] ?? '';
-        $cmd = sprintf('mysql -u%s -p%s -e "CREATE DATABASE IF NOT EXISTS %s CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" 2>&1',
-            escapeshellarg($user), escapeshellarg($pass), escapeshellarg($dbName));
-        exec($cmd, $out, $code);
+        try {
+            $pdo = new \PDO("mysql:host={$host};port={$port}", $user, $pass, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        } catch (\Throwable $e) {
+            throw new \RuntimeException("Error al crear la base de datos '{$dbName}': " . $e->getMessage());
+        }
     }
 
     /**
