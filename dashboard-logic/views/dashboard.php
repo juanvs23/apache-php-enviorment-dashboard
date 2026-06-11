@@ -37,87 +37,30 @@
 <section class="py-4 container-fluid" style="min-height: calc(100vh - 56px); background: linear-gradient(135deg, #1a1d23 0%, #2d323e 100%);">
 
     <!-- ─── Tabs ──────────────────────────────────────────────────── -->
-    <?php if ($canViewServer): ?>
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabProyectos"
                     type="button">📁 Proyectos</button>
         </li>
+        <?php if ($isAdmin): ?>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabNewProject"
+                    type="button">🆕 Nuevo Proyecto</button>
+        </li>
+        <?php endif; ?>
+        <?php if ($canViewServer): ?>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabServer"
                     type="button">🖥️ Servidor</button>
         </li>
+        <?php endif; ?>
     </ul>
-    <?php endif; ?>
 
     <div class="tab-content">
 
         <!-- ─── Proyectos ─────────────────────────────────────────── -->
         <div class="tab-pane fade show active"
              id="tabProyectos">
-
-            <!-- ═══════════════════════════════════════════════════════ -->
-            <!-- CREAR PROYECTO -->
-            <!-- ═══════════════════════════════════════════════════════ -->
-            <div class="mb-4">
-                <h5 class="text-light mb-3 d-flex align-items-center gap-2">
-                    <span>🆕</span> Crear Proyecto
-                </h5>
-                <div class="row g-3">
-                    <!-- HTML en blanco -->
-                    <div class="col-12 col-md-4">
-                        <div class="card bg-dark border-secondary h-100 shadow-sm"
-                             role="button" data-bs-toggle="modal" data-bs-target="#modalNewHtml"
-                             style="cursor: pointer; transition: transform .15s, box-shadow .15s;"
-                             onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,.4)';"
-                             onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                            <div class="card-body text-center py-4">
-                                <div class="mb-3" style="font-size: 3rem;">🌐</div>
-                                <h6 class="card-title text-light mb-2">HTML en blanco</h6>
-                                <p class="card-text text-secondary small mb-0">
-                                    Proyecto estático con index.html, CSS y JS. Ideal para landing pages o sitios simples.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Laravel -->
-                    <div class="col-12 col-md-4">
-                        <div class="card bg-dark border-secondary h-100 shadow-sm"
-                             role="button" data-bs-toggle="modal" data-bs-target="#modalNewLaravel"
-                             style="cursor: pointer; transition: transform .15s, box-shadow .15s;"
-                             onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,.4)';"
-                             onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                            <div class="card-body text-center py-4">
-                                <div class="mb-3" style="font-size: 3rem;">🔺</div>
-                                <h6 class="card-title text-light mb-2">Laravel</h6>
-                                <p class="card-text text-secondary small mb-0">
-                                    Proyecto Laravel con PHP, Composer y base de datos MySQL/MariaDB.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- WordPress -->
-                    <div class="col-12 col-md-4">
-                        <div class="card bg-dark border-secondary h-100 shadow-sm"
-                             role="button" data-bs-toggle="modal" data-bs-target="#modalNewWordpress"
-                             style="cursor: pointer; transition: transform .15s, box-shadow .15s;"
-                             onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,.4)';"
-                             onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                            <div class="card-body text-center py-4">
-                                <div class="mb-3" style="font-size: 3rem;">📝</div>
-                                <h6 class="card-title text-light mb-2">WordPress</h6>
-                                <p class="card-text text-secondary small mb-0">
-                                    WordPress completo con base de datos, temas y plugins preconfigurados.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ═══════════════════════════════════════════════════════ -->
-            <!-- LISTA DE PROYECTOS -->
-            <!-- ═══════════════════════════════════════════════════════ -->
             <h5 class="text-light mb-3 d-flex align-items-center gap-2">
                 <span>📁</span> Mis Proyectos
             </h5>
@@ -134,6 +77,62 @@
                 <?php endif; ?>
             </div>
         </div>
+
+        <!-- ─── Nuevo Proyecto (solo admin) ───────────────────────── -->
+        <?php if ($isAdmin): ?>
+        <div class="tab-pane fade" id="tabNewProject">
+            <div class="row g-3">
+                <!-- HTML en blanco -->
+                <div class="col-12 col-md-4">
+                    <div class="card bg-dark border-secondary h-100 shadow-sm"
+                         role="button" data-bs-toggle="modal" data-bs-target="#modalNewHtml"
+                         style="cursor: pointer; transition: transform .15s, box-shadow .15s;"
+                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,.4)';"
+                         onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                        <div class="card-body text-center py-4">
+                            <div class="mb-3" style="font-size: 3rem;">🌐</div>
+                            <h6 class="card-title text-light mb-2">HTML en blanco</h6>
+                            <p class="card-text text-secondary small mb-0">
+                                Proyecto estático con index.html, CSS y JS. Ideal para landing pages o sitios simples.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Laravel -->
+                <div class="col-12 col-md-4">
+                    <div class="card bg-dark border-secondary h-100 shadow-sm"
+                         role="button" data-bs-toggle="modal" data-bs-target="#modalNewLaravel"
+                         style="cursor: pointer; transition: transform .15s, box-shadow .15s;"
+                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,.4)';"
+                         onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                        <div class="card-body text-center py-4">
+                            <div class="mb-3" style="font-size: 3rem;">🔺</div>
+                            <h6 class="card-title text-light mb-2">Laravel</h6>
+                            <p class="card-text text-secondary small mb-0">
+                                Proyecto Laravel con PHP, Composer y base de datos MySQL/MariaDB.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- WordPress -->
+                <div class="col-12 col-md-4">
+                    <div class="card bg-dark border-secondary h-100 shadow-sm"
+                         role="button" data-bs-toggle="modal" data-bs-target="#modalNewWordpress"
+                         style="cursor: pointer; transition: transform .15s, box-shadow .15s;"
+                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,.4)';"
+                         onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                        <div class="card-body text-center py-4">
+                            <div class="mb-3" style="font-size: 3rem;">📝</div>
+                            <h6 class="card-title text-light mb-2">WordPress</h6>
+                            <p class="card-text text-secondary small mb-0">
+                                WordPress completo con base de datos, temas y plugins preconfigurados.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- ─── Server Info ───────────────────────────────────────── -->
         <?php if ($canViewServer): ?>
