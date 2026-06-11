@@ -12,7 +12,13 @@
             <h5 class="card-title mb-0 fw-bold text-truncate" style="color: #e4e6eb;">
                 <?= htmlspecialchars($project['name']) ?>
             </h5>
-            <?= $project['badge'] ?>
+            <div class="d-flex align-items-center gap-1">
+                <?= $project['badge'] ?>
+                <form method="post" action="?delete_project=<?= urlencode($project['dir']) ?>" class="d-inline"
+                      onsubmit="return confirm('¿Eliminar <?= htmlspecialchars($project['name']) ?>?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger px-1 py-0" title="Eliminar proyecto">🗑</button>
+                </form>
+            </div>
         </div>
         <div class="card-body" style="padding: 1rem;">
             <div class="d-flex align-items-center gap-2 mb-2">
@@ -38,6 +44,28 @@
                        class="btn btn-sm btn-outline-primary px-3">WP Admin</a>
                 </div>
                 <?php endif; ?>
+            <?php endif; ?>
+
+            <?php if ($project['has_node']): ?>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <span class="badge bg-warning bg-opacity-10 text-warning small px-2 py-1">📦 Node.js</span>
+                    <?php if ($project['has_pid']): ?>
+                    <a target="_blank" href="/<?= urlencode($project['dir']) ?>" class="btn btn-sm btn-info px-2">🔗 Dev</a>
+                    <form method="post" action="?npm_action=stop&dir=<?= urlencode($project['dir']) ?>" class="d-inline"
+                          onsubmit="return confirm('¿Detener el servidor?');">
+                        <button type="submit" class="btn btn-sm btn-danger px-2">⏹ Detener</button>
+                    </form>
+                    <?php else: ?>
+                    <form method="post" action="?npm_action=install&dir=<?= urlencode($project['dir']) ?>" class="d-inline"
+                          onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='⏳';">
+                        <button type="submit" class="btn btn-sm btn-warning px-2">📦 Instalar</button>
+                    </form>
+                    <form method="post" action="?npm_action=start&dir=<?= urlencode($project['dir']) ?>" class="d-inline"
+                          onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='⏳';">
+                        <button type="submit" class="btn btn-sm btn-success px-2">🚀 Iniciar</button>
+                    </form>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
 
             <?php if ($project['user']): ?>

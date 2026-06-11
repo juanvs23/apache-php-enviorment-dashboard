@@ -88,6 +88,28 @@ explain "  • MySQL  = base de datos (usuarios, proyectos)"
 # Laravel:     zip, bcmath, tokenizer, fileinfo, curl, xml, mbstring
 # Apache:      libapache2-mod-php / mod_php
 
+# ─── Herramientas de sistema (unzip, curl) ────────────────────────
+explain "  • unzip: extraer archivos .zip (Composer, WordPress)"
+explain "  • curl:  descargas HTTP (Composer, WP-CLI, NodeSource)"
+for tool in unzip curl; do
+    if command -v "$tool" &>/dev/null; then
+        info "$tool ya instalado"
+    else
+        warn "$tool no encontrado — instalando..."
+        case "$PKG" in
+            apt)     sudo apt-get install -y -qq "$tool" 2>/dev/null && info "$tool instalado" || warn "No se pudo instalar $tool" ;;
+            dnf|yum)
+                if [[ "$PKG" == "dnf" ]]; then sudo dnf install -y "$tool" 2>/dev/null
+                else sudo yum install -y "$tool" 2>/dev/null; fi
+                command -v "$tool" &>/dev/null && info "$tool instalado" || warn "No se pudo instalar $tool"
+                ;;
+            pacman)  sudo pacman -Sy --noconfirm "$tool" 2>/dev/null && info "$tool instalado" || warn "No se pudo instalar $tool" ;;
+            zypper)  sudo zypper install -y "$tool" 2>/dev/null && info "$tool instalado" || warn "No se pudo instalar $tool" ;;
+            *)       warn "Instalá $tool manualmente" ;;
+        esac
+    fi
+done
+
 PHP_SHORT="${PHP_VER/./}"
 
 case "$PKG" in
@@ -202,6 +224,7 @@ step "2. Activando módulos de Apache"
 explain "Apache carga funcionalidades por módulos. Necesitamos dos:"
 explain "  • mod_rewrite = URLs limpias (ej: /twilight/hola → index.php)"
 explain "  • mod_php     = ejecutar código PHP dentro de Apache"
+explain "  • mod_proxy_http = proxy reverso para Vite (proyectos HTML con npm)"
 
 # Verificar que Apache esté instalado
 if ! command -v apache2ctl &>/dev/null && ! command -v apachectl &>/dev/null && ! command -v httpd &>/dev/null; then
@@ -215,7 +238,7 @@ case "$PKG" in
         PHP_VER=$(detect_php_version)
         PHP_SHORT="${PHP_VER/./}"
 
-        for mod in rewrite "php${PHP_VER}"; do
+        for mod in rewrite "php${PHP_VER}" proxy_http; do
             if apache2ctl -M 2>/dev/null | grep -qi "${mod}_module"; then
                 info "mod_$mod ya activo"
             else
@@ -235,7 +258,7 @@ case "$PKG" in
         explain "  LoadModule php_module modules/libphp.so"
         ;;
     zypper)
-        for mod in rewrite php8; do
+        for mod in rewrite php8 proxy_http; do
             sudo a2enmod -q "$mod" 2>/dev/null && info "mod_$mod activado" \
                 || warn "mod_$mod no disponible"
         done
@@ -243,9 +266,150 @@ case "$PKG" in
 esac
 
 # ══════════════════════════════════════════════════════════════════════
-# 3. Verificar extensiones PHP
+# 3. Instalar Git + Node.js (para crear proyectos desde el dashboard)
 # ══════════════════════════════════════════════════════════════════════
-step "3. Verificando extensiones PHP"
+step "3. Instalando Git + Node.js (LTS)"
+explain "Estas herramientas se usan para crear proyectos desde el dashboard."
+explain "  • Git = clonar repositorios (opción 'Clonar desde GitHub')"
+explain "  • Node.js + npm = proyectos con Vite.js (opción 'Usar Vite.js')"
+
+# ─── Git ────────────────────────────────────────────────────────────
+if command -v git &>/dev/null; then
+    GIT_VERSION=$(git --version 2>/dev/null || echo "desconocida")
+    info "Git ya instalado: $GIT_VERSION"
+else
+    warn "Git no encontrado — instalando..."
+    case "$PKG" in
+        apt)
+            sudo apt-get install -y -qq git 2>/dev/null \
+                && info "Git instalado" \
+                || warn "No se pudo instalar Git — instalalo manual: https://git-scm.com"
+            ;;
+        dnf|yum)
+            if [[ "$PKG" == "dnf" ]]; then
+                sudo dnf install -y git 2>/dev/null && info "Git instalado via dnf" \
+                    || warn "No se pudo instalar Git"
+            else
+                sudo yum install -y git 2>/dev/null && info "Git instalado via yum" \
+                    || warn "No se pudo instalar Git"
+            fi
+            ;;
+        pacman)
+            sudo pacman -Sy --noconfirm git 2>/dev/null \
+                && info "Git instalado via pacman" \
+                || warn "No se pudo instalar Git"
+            ;;
+        zypper)
+            sudo zypper install -y git 2>/dev/null \
+                && info "Git instalado via zypper" \
+                || warn "No se pudo instalar Git"
+            ;;
+        *)
+            warn "Gestor de paquetes no reconocido. Instalá Git manualmente:"
+            warn "  https://git-scm.com/downloads"
+            ;;
+    esac
+fi
+
+# ─── Node.js ────────────────────────────────────────────────────────
+if command -v node &>/dev/null; then
+    NODE_CURRENT=$(node --version 2>/dev/null || echo "none")
+    info "Node.js ya instalado: $NODE_CURRENT"
+else
+    warn "Node.js no encontrado — instalando versión LTS más reciente..."
+    case "$PKG" in
+        apt)
+            explain "Usando NodeSource para Ubuntu/Debian..."
+            curl -fsSL https://deb.nodesource.com/setup_24.x 2>/dev/null | sudo -E bash - 2>/dev/null
+            sudo apt-get install -y -qq nodejs 2>/dev/null \
+                && info "Node.js $(node --version) instalado" \
+                || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            ;;
+        dnf|yum)
+            explain "Usando módulos oficiales de Fedora/RHEL..."
+            if [[ "$PKG" == "dnf" ]]; then
+                sudo dnf module install -y nodejs:24 2>/dev/null \
+                    && info "Node.js instalado via dnf module" \
+                    || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            else
+                sudo yum install -y nodejs npm 2>/dev/null \
+                    && info "Node.js instalado via yum" \
+                    || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            fi
+            ;;
+        pacman)
+            sudo pacman -Sy --noconfirm nodejs npm 2>/dev/null \
+                && info "Node.js instalado via pacman" \
+                || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            ;;
+        zypper)
+            sudo zypper install -y nodejs npm 2>/dev/null \
+                && info "Node.js instalado via zypper" \
+                || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            ;;
+        *)
+            warn "Gestor de paquetes no reconocido. Instalá Node.js manualmente:"
+            warn "  https://nodejs.org/en/download/"
+            ;;
+    esac
+
+    # Verificar npm también
+    if command -v npm &>/dev/null; then
+        info "npm $(npm --version) instalado"
+    fi
+fi
+
+# ══════════════════════════════════════════════════════════════════════
+# 4. Instalar Composer + WP-CLI
+# ══════════════════════════════════════════════════════════════════════
+step "4. Instalando Composer + WP-CLI"
+explain "Composer y WP-CLI son herramientas PHP para crear proyectos."
+explain "  • Composer = gestor de dependencias PHP (necesario para Laravel)"
+explain "  • WP-CLI  = interfaz de línea de comandos para WordPress"
+
+# ─── Composer ──────────────────────────────────────────────────────
+if command -v composer &>/dev/null; then
+    info "Composer ya instalado: $(composer --version 2>/dev/null | head -1)"
+else
+    warn "Composer no encontrado — instalando..."
+    EXPECTED_CHECKSUM="$(php -r 'copy("https://composer.github.io/installer.sig", "php://stdout");')"
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+    if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+        warn "Hash de Composer no coincide — instalación abortada por seguridad"
+        rm composer-setup.php
+    else
+        php composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer 2>/dev/null
+        rm composer-setup.php
+        if command -v composer &>/dev/null; then
+            info "Composer $(composer --version 2>/dev/null | head -1) instalado"
+        else
+            warn "No se pudo instalar Composer — instalalo manual: https://getcomposer.org"
+        fi
+    fi
+fi
+
+# ─── WP-CLI ────────────────────────────────────────────────────────
+if command -v wp &>/dev/null; then
+    info "WP-CLI ya instalado: $(wp --version 2>/dev/null)"
+else
+    warn "WP-CLI no encontrado — instalando..."
+    if command -v curl &>/dev/null; then
+        curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar 2>/dev/null
+        chmod +x wp-cli.phar
+        sudo mv wp-cli.phar /usr/local/bin/wp 2>/dev/null \
+            && info "WP-CLI instalado" \
+            || warn "No se pudo instalar WP-CLI — instalalo manual: https://wp-cli.org"
+    else
+        warn "curl no disponible — no se puede descargar WP-CLI. Instalalo manual: https://wp-cli.org"
+    fi
+fi
+
+# ══════════════════════════════════════════════════════════════════════
+# 5. Verificar extensiones PHP
+# ══════════════════════════════════════════════════════════════════════
+step "5. Verificando extensiones PHP"
 explain "Reviso una por una las extensiones que el dashboard necesita."
 explain "Si alguna falta, instalala con: sudo apt install phpX.X-nombre"
 
@@ -262,7 +426,7 @@ done
 # ══════════════════════════════════════════════════════════════════════
 # 4. Configurar .env
 # ══════════════════════════════════════════════════════════════════════
-step "4. Configurando .env"
+step "6. Configurando .env"
 explain "El archivo .env guarda las credenciales de MySQL de forma segura."
 explain "Voy a copiar .env.example → .env y pedirte los datos."
 
@@ -322,7 +486,7 @@ DB_NAME=${DB_NAME:-apache-dashboard}; DB_USER=${DB_USER:-root}; DB_PASS=${DB_PAS
 # ══════════════════════════════════════════════════════════════════════
 # 5. Crear base de datos MySQL
 # ══════════════════════════════════════════════════════════════════════
-step "5. Creando base de datos '$DB_NAME'"
+step "7. Creando base de datos '$DB_NAME'"
 explain "El dashboard guarda usuarios, proyectos y configuraciones en MySQL."
 explain "Voy a crear la base de datos '$DB_NAME' si no existe todavía."
 
@@ -347,7 +511,7 @@ fi
 # ══════════════════════════════════════════════════════════════════════
 # 6. Actualizar .htaccess
 # ══════════════════════════════════════════════════════════════════════
-step "6. Configurando auto_prepend_file"
+step "8. Configurando auto_prepend_file"
 explain "El dashboard protege los subdirectorios (WordPress, etc.) ejecutando"
 explain "un archivo de autenticación ANTES de cada página PHP. Esto se llama"
 explain "'auto_prepend_file' y se configura en .htaccess con una ruta absoluta."
@@ -367,7 +531,7 @@ fi
 # ══════════════════════════════════════════════════════════════════════
 # 7. Seed de datos iniciales
 # ══════════════════════════════════════════════════════════════════════
-step "7. Sembrando datos iniciales"
+step "9. Sembrando datos iniciales"
 explain "El seed crea el usuario administrador por defecto y las tablas"
 explain "si no existen todavía (no borra nada si ya están creadas)."
 
@@ -377,7 +541,7 @@ php "$SEED" 2>/dev/null && info "Seed ejecutado correctamente" \
 # ══════════════════════════════════════════════════════════════════════
 # 8. Configurar Apache VirtualHost
 # ══════════════════════════════════════════════════════════════════════
-step "8. Configurando Apache"
+step "10. Configurando Apache"
 explain "Apache necesita saber dónde está el proyecto (DocumentRoot) y que"
 explain "puede usar archivos .htaccess (AllowOverride All)."
 
@@ -426,6 +590,34 @@ elif command -v apachectl &>/dev/null; then
     sudo apachectl restart 2>/dev/null && info "Apache reiniciado"
 else
     warn "Reiniciá Apache manualmente"
+fi
+
+# ══════════════════════════════════════════════════════════════════════
+# 11. Configurar sudo para npm (dashboard → npm install sin contraseña)
+# ══════════════════════════════════════════════════════════════════════
+step "11. Configurando permisos npm para el dashboard"
+explain "Permite al dashboard ejecutar npm install en nombre del dueño de cada proyecto."
+explain "  • www-data (Apache) puede correr npm install como cualquier usuario"
+explain "  • Solo para los binarios de npm en /usr/bin/ y /usr/local/bin/"
+explain "  • SIN contraseña — seguro porque solo permite npm install, no comandos arbitrarios"
+
+SUDOERS_FILE="/etc/sudoers.d/dashboard-npm"
+if [[ -f "$SUDOERS_FILE" ]]; then
+    info "sudoers para npm ya configurado"
+else
+    NPM_PATHS="/usr/bin/npm /usr/local/bin/npm"
+    CMD_LIST=""
+    for np in $NPM_PATHS; do
+        [[ -f "$np" ]] && CMD_LIST="$CMD_LIST, $np install *"
+    done
+    if [[ -n "$CMD_LIST" ]]; then
+        echo "www-data ALL=(ALL) NOPASSWD: ${CMD_LIST#, }" | sudo tee "$SUDOERS_FILE" > /dev/null
+        sudo chmod 0440 "$SUDOERS_FILE"
+        info "sudoers configurado: www-data puede ejecutar npm install"
+    else
+        warn "npm no encontrado en rutas del sistema — saltando configuración sudo"
+        warn "Si instalás npm después, creá $SUDOERS_FILE manualmente."
+    fi
 fi
 
 # ══════════════════════════════════════════════════════════════════════

@@ -116,6 +116,8 @@ final class ProjectScanner
         }
 
         $hasWp = file_exists($this->rootPath . '/' . $dir . '/wp-config.php');
+        $hasNode = file_exists($this->rootPath . '/' . $dir . '/package.json');
+        $hasPid  = file_exists($this->rootPath . '/' . $dir . '/.pid') && $this->isProcessRunning($this->rootPath . '/' . $dir . '/.pid');
 
         return [
             'dir'       => $dir,
@@ -123,9 +125,26 @@ final class ProjectScanner
             'name'      => ucfirst(str_replace('-', ' ', $dir)),
             'type'      => $fields['type'],
             'has_wp'    => $hasWp,
+            'has_node'  => $hasNode,
+            'has_pid'   => $hasPid,
             'card_style'=> $hasWp ? 'border-start border-primary border-4' : '',
             'user'      => htmlspecialchars($fields['user']),
             'password'  => htmlspecialchars($fields['password']),
         ];
+    }
+
+    /**
+     * Verifica si un proceso sigue corriendo a partir de un archivo .pid.
+     */
+    private function isProcessRunning(string $pidFile): bool
+    {
+        if (!file_exists($pidFile)) {
+            return false;
+        }
+        $pid = (int) file_get_contents($pidFile);
+        if ($pid <= 0) {
+            return false;
+        }
+        return file_exists("/proc/{$pid}");
     }
 }

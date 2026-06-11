@@ -4,21 +4,24 @@
 </Files>
 
 # ─── Auth check en TODOS los PHP requests (incluye subdirectorios) ──────────
-# ⚠️ IMPORTANTE: al desplegar en otro entorno, actualizá la ruta absoluta
-# para que apunte al directorio raíz del proyecto.
 php_value auto_prepend_file /mnt/vol/projects/apache/dashboard-logic/auth-check.php
 
-# ─── Proteger dashboard-logic (solo wp-auto-login.php pasa) ────────────────
+# ─── Rewrites + Proxy Vite ──────────────────────────────────────────────────
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteBase /
 
-# Permitir el auto-login
+# Permitir auto-login de WordPress
 RewriteRule ^dashboard-logic/wp-auto-login\.php - [L,NC]
 
-# Bloquear todo lo demás en dashboard-logic
+# Bloquear acceso directo a dashboard-logic
 RewriteRule ^dashboard-logic/ - [F,NC]
 
-# Permitir el dashboard y assets
+# Permitir dashboard y assets
 RewriteRule ^(index\.php|assets/) - [L,NC]
+
+# Proxy a Vite: rutas que solo existen en el dev server
+# (Solo se activa si Vite está corriendo, sino Apache da 404 normal)
+RewriteCond %{REQUEST_URI} ^/(@vite/|@fs/|@id/|src/|node_modules/vite/)
+RewriteRule ^(.*)$ http://127.0.0.1:5173/$1 [P,L]
 </IfModule>

@@ -1,0 +1,10 @@
+#!/bin/bash
+export FNM_DIR="/home/juanvs23/.local/share/fnm"
+eval "$(fnm env --shell bash 2>/dev/null)" 2>/dev/null
+if ! command -v npm &>/dev/null; then
+    NODE_VER=$(ls -t "$FNM_DIR/node-versions" 2>/dev/null | head -1)
+    if [ -n "$NODE_VER" ]; then
+        export PATH="$FNM_DIR/node-versions/$NODE_VER/installation/bin:$PATH"
+    fi
+fi
+exec npm "$@"

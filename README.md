@@ -181,7 +181,56 @@ Esto crea:
 > Creá tu propio usuario admin desde el dashboard (Usuarios → Crear Usuario)
 > y luego eliminá o cambiá la clave del usuario por defecto.
 
-### Agregar proyectos
+### Crear proyectos desde el dashboard
+
+Los administradores pueden crear proyectos directamente desde la interfaz web. No hace falta SSH.
+
+1. Andá a la pestaña **🆕 Nuevo Proyecto** (solo visible para admin)
+2. Elegí el tipo de proyecto:
+   - **🌐 HTML** — Proyecto estático con `index.html`, `assets/css/`, `assets/js/`
+   - **📝 WordPress** — Instalación completa con WP-CLI
+3. Completá los datos y clickeá **Crear**
+
+> 💡 El proyecto se crea con `git init`, `.gitignore` y permisos listos para desarrollar.
+
+#### Proyecto HTML — opciones extra
+
+| Opción | Descripción |
+|---|---|
+| ⚡ Vite.js | Agrega `package.json`, `vite.config.js` y estructura `src/`. Ideal para JS moderno |
+| 📥 Clonar GitHub | Clona un repositorio público en vez de crear desde cero. Solo HTTPS |
+
+#### Proyecto WordPress — datos necesarios
+
+| Campo | Ejemplo |
+|---|---|
+| Nombre | Mi Blog |
+| Directorio | mi-blog |
+| Base de datos | wp_mi_blog |
+| Título del sitio | Mi Blog Personal |
+| Email admin | admin@admin.com |
+| Contraseña admin | contraseña segura |
+
+> 🔐 Se agrega `define('FS_METHOD', 'direct')` para evitar pedir FTP al instalar plugins.
+
+### Gestionar proyectos con Node.js
+
+Si un proyecto tiene `package.json`, el dashboard muestra botones para administrarlo:
+
+| Botón | Acción |
+|---|---|
+| 📦 Instalar | Ejecuta `npm install` en el proyecto |
+| 🚀 Iniciar | Levanta el dev server de Vite en segundo plano |
+| ⏹ Detener | Apaga el dev server |
+| 🔗 Dev | Abre el proyecto por el proxy de Apache (no por puerto 5173) |
+
+> 💡 Al iniciar el dev server, Apache actúa como proxy. Podés acceder desde `http://localhost/mi-proyecto/` sin cambiar de puerto.
+
+### Eliminar proyectos
+
+Cada tarjeta de proyecto tiene un botón 🗑 en el header. Solo visible para administradores. Borra el directorio completo.
+
+### Agregar proyectos manualmente
 
 Cada subdirectorio necesita un archivo `user-data.txt`:
 

@@ -34,6 +34,100 @@ fileinfo     → Laravel (uploads)
 tokenizer    → Laravel
 ```
 
+### Componente opcional
+
+| Componente | Versión mínima | Para qué |
+|-----------|:---:|----------|
+| Git | 2.30+ | Clonar repositorios desde GitHub al crear proyectos |
+| Node.js | 22.x / 24.x LTS | Crear proyectos HTML con Vite.js (HMR, bundler moderno) |
+| npm | 9.x+ | Gestor de paquetes de Node.js |
+| unzip | 6.0+ | Extraer archivos .zip (Composer, WordPress) |
+| curl | 7.0+ | Descargas HTTP (Composer, WP-CLI, NodeSource) |
+| Composer | 2.x | Gestor de dependencias PHP — necesario para Laravel |
+| WP-CLI | 2.x | CLI de WordPress — `wp core download`, `wp config`, `wp core install` |
+
+> **Nota:** Git solo si usás **"Clonar desde GitHub"**. Node.js solo para **"Usar Vite.js"**. Composer solo para **Laravel**. WP-CLI solo para **WordPress**. Para HTML estático sin Vite ni GitHub, no hace falta nada de esto.
+
+**Instalación de Git:**
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install -y git
+
+# Fedora/RHEL
+sudo dnf install -y git
+
+# Arch Linux
+sudo pacman -Sy git
+
+# macOS (Homebrew) — ya viene instalado con Xcode CLI Tools
+# Windows: https://git-scm.com/downloads
+```
+
+**Instalación de Node.js:**
+
+```bash
+# Ubuntu/Debian — via NodeSource (LTS)
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Fedora/RHEL
+sudo dnf module install -y nodejs:24
+
+# Arch Linux
+sudo pacman -Sy nodejs npm
+
+# macOS (Homebrew)
+brew install node
+
+# Windows
+# Descargar de https://nodejs.org/ (versión LTS)
+```
+
+**Instalación de Composer:**
+
+```bash
+# Todas las plataformas (instalación oficial con verificación de hash)
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php -r "if (hash_file('sha384', 'composer-setup.php') === file_get_contents('https://composer.github.io/installer.sig')) { echo 'OK'; } else { echo 'FAIL'; exit(1); }"
+php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+php -r "unlink('composer-setup.php');"
+
+# Ubuntu/Debian (alternativa rápida, versión puede ser vieja)
+sudo apt-get install -y composer
+
+# macOS (Homebrew)
+brew install composer
+```
+
+**Instalación de WP-CLI:**
+
+```bash
+# Todas las plataformas (descarga del phar oficial)
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+chmod +x wp-cli.phar
+sudo mv wp-cli.phar /usr/local/bin/wp
+
+# Verificar
+wp --info
+```
+
+### Permisos npm para el dashboard
+
+Para que el dashboard pueda ejecutar `npm install` en nombre del dueño de cada proyecto, Apache (`www-data`) necesita permiso sudo restringido:
+
+```bash
+# Crear archivo de permisos (el setup.sh lo hace automáticamente)
+sudo tee /etc/sudoers.d/dashboard-npm <<'EOF'
+www-data ALL=(ALL) NOPASSWD: /usr/bin/npm install *, /usr/local/bin/npm install *
+EOF
+sudo chmod 0440 /etc/sudoers.d/dashboard-npm
+```
+
+> **Qué hace:** `www-data` puede correr `/usr/bin/npm install` como cualquier usuario del sistema, sin contraseña. Solo ese comando específico, no comandos arbitrarios. Se usa cuando el proyecto fue creado por otro usuario (ej: manualmente) y `npm install` debe ejecutarse como ese dueño.
+
+> **Si el proyecto lo crea el dashboard,** no se necesita sudo porque el dueño ya es `www-data`.
+
 ---
 
 ## 2. Instalación por sistema operativo

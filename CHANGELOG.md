@@ -1,6 +1,58 @@
 # Changelog
 
-## 1.3.0 (2026-06-10)
+## 1.4.0 (2026-06-11)
+
+### Crear proyectos desde el dashboard
+
+- **3 tipos de proyecto**: HTML (vanilla/Vite), WordPress desde cero, clonar desde GitHub
+- **HTML**: estructura `index.html` + `assets/css/` + `assets/js/` + `assets/images/`, `.gitignore`, `git init`
+- **Vite.js**: checkbox opcional para `package.json`, `vite.config.js`, `src/`, hot reload
+- **WordPress**: `wp core download` + `wp config create` + `wp core install`, `FS_METHOD direct`
+- **Clonar GitHub**: `git clone` de repos públicos, auto-detección de tipo, `npm install` automático
+- **Modales**: tabs Bootstrap, validación de campos, feedback con flash messages
+
+### Gestión npm desde el dashboard
+
+- **📦 Instalar**: `npm install` con cache en `/tmp`, `sudo -u {owner}`, detección de npm system-wide
+- **🚀 Iniciar**: `nohup npm run dev &`, PID file, mata procesos previos al iniciar
+- **⏹ Detener**: `kill` + limpiar `.pid`, confirmación antes de detener
+- **Detector `has_node`/`has_pid`**: el card muestra el botón correcto según el estado
+- **Proxy Vite**: Apache proxy pass a `127.0.0.1:5173` para rutas que no existen en disco
+
+### Infraestructura y seguridad
+
+- **`setup.sh` 10 pasos**: instalación condicional de Git, Node.js, Composer, WP-CLI, `unzip`, `curl`
+- **`mod_proxy_http`**: activado automáticamente en `setup.sh`
+- **`sudoers.d/dashboard-npm`**: `www-data` puede ejecutar `npm install` sin contraseña
+- **auth-check bypass**: Google PageSpeed, Lighthouse, GTmetrix
+- **Bloqueo crawlers**: 403 para bots de indexación + `robots.txt`
+- **`robots.txt`**: `Disallow: /` para todos los crawlers
+
+### Mejoras de código
+
+- **`ProjectCreator`**: servicio con `createHtml()`, `createLaravel()`, `createWordpress()`, `createFromGithub()`
+- **`LegacyReader`**: encapsula 6 funciones legacy de lectura para vistas
+- **`AuthContext`**: reemplaza `check_auth()`, `refresh_auth_cookie()`, `get_auth_user()`, `can()` globales
+- **DRY dashboard**: `$newProjectTypes` array + partial `_new-project-card.php`
+- **SVG oficiales**: HTML5, Laravel, WordPress (simple-icons)
+- **Delete project**: botón 🗑 en card header, handler con validación
+- **`chmod -R 0777`**: todos los proyectos creados sin conflictos de permisos
+- **6 archivos legacy eliminados**: `auth.php`, `user-management.php`, `level-management.php`, `profile.php`, `projects.php`, `rate-limiter.php`
+
+### Testing
+
+- **179 tests** (156 unitarios + 23 integración), 434 assertions, 0 failures
+- **27 tests Presentation**: AuthController, AdminController
+- **23 tests Integration**: LegacyReader, AuthContext
+
+### Fixes
+
+- AdminController: 100% libre de PDO directo
+- `UpdateUserUseCase`: soporta cambio de nivel
+- `DeleteUserUseCase`: desvincula proyectos antes de eliminar
+- `admin@admin` → `admin@admin.com` (FILTER_VALIDATE_EMAIL)
+- `fix-admin.php`: CLI tool para resetear admin
+- Botón mostrar/ocultar contraseña en perfil y user-management
 
 ### RBAC — Permisos dinámicos
 
