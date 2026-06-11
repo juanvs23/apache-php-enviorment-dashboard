@@ -5,8 +5,9 @@
  * Se ejecuta antes de CADA request PHP en cualquier subdirectorio
  * vía php_value auto_prepend_file en el .htaccess raíz.
  *
- * URLs permitidas sin auth:
+ * URLs/Bots permitidos sin auth:
  *   - index.php, dashboard-logic/wp-auto-login.php, assets/
+ *   - Google PageSpeed / Lighthouse
  */
 
 require_once __DIR__ . '/env-loader.php';
@@ -15,6 +16,17 @@ $__script = $_SERVER['SCRIPT_NAME'] ?? '';
 
 // ─── Permitir el dashboard y sus assets ─────────────────────────────────
 if (preg_match('#^/(index\.php|dashboard-logic/wp-auto-login\.php|assets/)#', $__script)) {
+    return;
+}
+
+// ─── Permitir Google PageSpeed Insights y Lighthouse ────────────────────
+$__ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+if (
+    str_contains($__ua, 'Chrome-Lighthouse')
+    || str_contains($__ua, 'PageSpeed')
+    || str_contains($__ua, 'Google Page Speed')
+    || str_contains($__ua, 'Lighthouse')
+) {
     return;
 }
 
