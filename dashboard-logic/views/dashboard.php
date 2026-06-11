@@ -99,7 +99,7 @@ $newProjectTypes = [
         <!-- ─── Nuevo Proyecto (solo admin) ───────────────────────── -->
         <?php if ($isAdmin): ?>
         <div class="tab-pane fade" id="tabNewProject">
-            <div class="row g-3">
+            <div class="row g-3 justify-content-center">
                 <?php foreach ($newProjectTypes as $type): ?>
                     <?php require __DIR__ . '/components/_new-project-card.php'; ?>
                 <?php endforeach; ?>
