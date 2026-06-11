@@ -56,21 +56,17 @@ final class ProjectCreator
         // user-data.txt para el dashboard
         file_put_contents($targetDir . '/user-data.txt', "type: html\nname: {$projectName}\n");
 
-        // Inicializar git (idempotente, no falla si ya existe)
+        // Inicializar git y .gitignore
         $gitOut = []; $gitCode = 0;
         exec(sprintf('cd %s && git init 2>&1', escapeshellarg($targetDir)), $gitOut, $gitCode);
-
-        // .gitignore para proyectos vanilla (Vite ya tiene el suyo)
         if (!file_exists($targetDir . '/.gitignore')) {
             file_put_contents($targetDir . '/.gitignore', "node_modules/\ndist/\n.env\n.DS_Store\n");
         }
-
         // .htaccess con proxy reverso para Vite
         if ($useVite) {
             file_put_contents($targetDir . '/.htaccess', implode("\n", [
                 '<IfModule mod_rewrite.c>',
                 'RewriteEngine On',
-                '# Proxy a Vite dev server (puerto 5173) — solo si el archivo no existe en disco',
                 'RewriteCond %{REQUEST_FILENAME} !-f',
                 'RewriteCond %{REQUEST_FILENAME} !-d',
                 'RewriteRule ^(.*)$ http://127.0.0.1:5173/$1 [P,L]',
@@ -78,6 +74,9 @@ final class ProjectCreator
                 '',
             ]));
         }
+
+        // Asegurar permisos para que el usuario y www-data puedan escribir
+        exec(sprintf('chmod -R 0777 %s', escapeshellarg($targetDir)));
 
         return $targetDir;
     }
@@ -128,6 +127,8 @@ final class ProjectCreator
             $installCmd = sprintf('cd %s && npm install 2>&1', escapeshellarg($targetDir));
             exec($installCmd, $installOutput, $installExitCode);
         }
+
+        exec(sprintf('chmod -R 0777 %s', escapeshellarg($targetDir)));
 
         return $targetDir;
     }
