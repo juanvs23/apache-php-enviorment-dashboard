@@ -182,6 +182,18 @@
                                placeholder="ej: landing-page" required>
                         <small class="text-secondary">Se creará en <code>/mnt/vol/projects/apache/</code>.</small>
                     </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="use_vite" value="1" id="htmlUseVite">
+                            <label class="form-check-label text-light" for="htmlUseVite">
+                                ⚡ Usar Vite.js
+                            </label>
+                        </div>
+                        <small class="text-secondary d-block mt-1">
+                            Incluye <code>package.json</code>, <code>vite.config.js</code> y estructura <code>src/</code>.
+                            Ideal para proyectos con JS moderno y HMR.
+                        </small>
+                    </div>
                     <div class="alert alert-info small mb-0">
                         <strong>Se instalará:</strong> <code>index.html</code>, <code>css/style.css</code>,
                         <code>js/app.js</code> y <code>user-data.txt</code> con datos para el dashboard.

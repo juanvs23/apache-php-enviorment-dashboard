@@ -34,6 +34,35 @@ fileinfo     → Laravel (uploads)
 tokenizer    → Laravel
 ```
 
+### Componente opcional
+
+| Componente | Versión mínima | Para qué |
+|-----------|:---:|----------|
+| Node.js | 22.x / 24.x LTS | Crear proyectos HTML con Vite.js (HMR, bundler moderno) |
+| npm | 9.x+ | Gestor de paquetes de Node.js |
+
+> **Nota:** Node.js solo es necesario si vas a usar la opción **"Usar Vite.js"** al crear proyectos HTML desde el dashboard. Para proyectos estáticos sin bundler, no hace falta.
+
+**Instalación de Node.js por SO:**
+
+```bash
+# Ubuntu/Debian — via NodeSource (LTS)
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Fedora/RHEL
+sudo dnf module install -y nodejs:24
+
+# Arch Linux
+sudo pacman -Sy nodejs npm
+
+# macOS (Homebrew)
+brew install node
+
+# Windows
+# Descargar de https://nodejs.org/ (versión LTS)
+```
+
 ---
 
 ## 2. Instalación por sistema operativo

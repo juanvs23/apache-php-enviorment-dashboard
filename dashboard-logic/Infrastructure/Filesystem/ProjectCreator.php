@@ -1,0 +1,231 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Dashboard\Infrastructure\Filesystem;
+
+/**
+ * Creador de proyectos en el sistema de archivos.
+ *
+ * Crea la estructura de directorios y archivos base para diferentes
+ * tipos de proyectos. Cada proyecto incluye user-data.txt para que
+ * el dashboard lo detecte automáticamente.
+ */
+final class ProjectCreator
+{
+    /**
+     * Ruta raíz donde crear proyectos.
+     */
+    private string $rootPath;
+
+    /**
+     * @param string $rootPath Ruta absoluta al directorio raíz
+     */
+    public function __construct(string $rootPath)
+    {
+        $this->rootPath = rtrim($rootPath, '/');
+    }
+
+    /**
+     * Crea un proyecto HTML desde cero.
+     *
+     * @param string $projectName Nombre descriptivo del proyecto
+     * @param string $directory   Nombre del directorio (slug, sin espacios)
+     * @param bool   $useVite     Si es true, configura Vite.js
+     * @return string Ruta absoluta del directorio creado
+     * @throws \RuntimeException Si el directorio ya existe
+     */
+    public function createHtml(string $projectName, string $directory, bool $useVite = false): string
+    {
+        $targetDir = $this->rootPath . '/' . $directory;
+
+        if (is_dir($targetDir)) {
+            throw new \RuntimeException("El directorio '{$directory}' ya existe");
+        }
+
+        if (!mkdir($targetDir, 0755, true)) {
+            throw new \RuntimeException("No se pudo crear el directorio '{$directory}'");
+        }
+
+        if ($useVite) {
+            $this->createViteProject($targetDir, $projectName);
+        } else {
+            $this->createVanillaProject($targetDir, $projectName);
+        }
+
+        // user-data.txt para el dashboard
+        file_put_contents($targetDir . '/user-data.txt', "type: html\nname: {$projectName}\n");
+
+        return $targetDir;
+    }
+
+    /**
+     * Crea un proyecto HTML vanilla (sin bundler).
+     */
+    private function createVanillaProject(string $targetDir, string $projectName): void
+    {
+        // assets/css/
+        mkdir($targetDir . '/assets/css', 0755, true);
+
+        // index.html
+        file_put_contents($targetDir . '/index.html', $this->vanillaHtmlTemplate($projectName));
+
+        // assets/css/style.css
+        file_put_contents($targetDir . '/assets/css/style.css', $this->vanillaCssTemplate());
+    }
+
+    /**
+     * Crea un proyecto HTML con Vite.js.
+     */
+    private function createViteProject(string $targetDir, string $projectName): void
+    {
+        // src/
+        mkdir($targetDir . '/src', 0755, true);
+
+        // public/ — opcional, assets estáticos
+        mkdir($targetDir . '/public', 0755, true);
+
+        // index.html (en raíz para Vite)
+        file_put_contents($targetDir . '/index.html', $this->viteHtmlTemplate($projectName));
+
+        // src/main.js
+        file_put_contents($targetDir . '/src/main.js', $this->viteMainJs());
+
+        // src/style.css
+        file_put_contents($targetDir . '/src/style.css', $this->vanillaCssTemplate());
+
+        // vite.config.js
+        file_put_contents($targetDir . '/vite.config.js', $this->viteConfig($directory = basename($targetDir)));
+
+        // package.json
+        file_put_contents($targetDir . '/package.json', $this->packageJson($projectName));
+
+        // .gitignore
+        file_put_contents($targetDir . '/.gitignore', "node_modules/\ndist/\n.vite/\n");
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // Templates
+    // ══════════════════════════════════════════════════════════════
+
+    private function vanillaHtmlTemplate(string $title): string
+    {
+        return <<<HTML
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{$title}</title>
+            <link rel="stylesheet" href="assets/css/style.css">
+        </head>
+        <body>
+            <h1>{$title}</h1>
+            <p>Proyecto creado con Dev Dashboard.</p>
+            <script src="assets/js/app.js"></script>
+        </body>
+        </html>
+        HTML;
+    }
+
+    private function vanillaCssTemplate(): string
+    {
+        return <<<CSS
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #1a1d23;
+        }
+
+        p {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        CSS;
+    }
+
+    private function viteHtmlTemplate(string $title): string
+    {
+        return <<<HTML
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{$title}</title>
+        </head>
+        <body>
+            <div id="app"></div>
+            <script type="module" src="/src/main.js"></script>
+        </body>
+        </html>
+        HTML;
+    }
+
+    private function viteMainJs(): string
+    {
+        return <<<JS
+        import './style.css';
+
+        document.querySelector('#app').innerHTML = `
+            <h1>🚀 Proyecto Vite</h1>
+            <p>Listo para desarrollar. Ejecutá <code>npm run dev</code>.</p>
+        `;
+        JS;
+    }
+
+    private function viteConfig(string $projectDir): string
+    {
+        return <<<JS
+        import { defineConfig } from 'vite';
+
+        export default defineConfig({
+            root: '.',
+            publicDir: 'public',
+            server: {
+                host: '0.0.0.0',
+                port: 5173,
+            },
+            build: {
+                outDir: 'dist',
+            },
+        });
+        JS;
+    }
+
+    private function packageJson(string $projectName): string
+    {
+        $name = strtolower(str_replace(' ', '-', $projectName));
+        return json_encode([
+            'name' => $name,
+            'private' => true,
+            'version' => '1.0.0',
+            'type' => 'module',
+            'scripts' => [
+                'dev' => 'vite',
+                'build' => 'vite build',
+                'preview' => 'vite preview',
+            ],
+            'devDependencies' => [
+                'vite' => '^5.0.0',
+            ],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+    }
+}

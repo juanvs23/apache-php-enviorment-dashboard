@@ -243,9 +243,64 @@ case "$PKG" in
 esac
 
 # ══════════════════════════════════════════════════════════════════════
-# 3. Verificar extensiones PHP
+# 3. Instalar Node.js (para proyectos HTML con Vite.js)
 # ══════════════════════════════════════════════════════════════════════
-step "3. Verificando extensiones PHP"
+step "3. Instalando Node.js (LTS)"
+explain "Node.js se usa para crear proyectos HTML modernos con Vite.js."
+explain "  • Vite.js = bundler rápido con HMR (Hot Module Replacement)"
+explain "  • Solo se necesita si vas a usar la opción 'Usar Vite.js' al crear proyectos HTML."
+
+if command -v node &>/dev/null; then
+    NODE_CURRENT=$(node --version 2>/dev/null || echo "none")
+    info "Node.js ya instalado: $NODE_CURRENT"
+else
+    warn "Node.js no encontrado — instalando versión LTS más reciente..."
+    case "$PKG" in
+        apt)
+            explain "Usando NodeSource para Ubuntu/Debian..."
+            curl -fsSL https://deb.nodesource.com/setup_24.x 2>/dev/null | sudo -E bash - 2>/dev/null
+            sudo apt-get install -y -qq nodejs 2>/dev/null \
+                && info "Node.js $(node --version) instalado" \
+                || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            ;;
+        dnf|yum)
+            explain "Usando módulos oficiales de Fedora/RHEL..."
+            if [[ "$PKG" == "dnf" ]]; then
+                sudo dnf module install -y nodejs:24 2>/dev/null \
+                    && info "Node.js instalado via dnf module" \
+                    || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            else
+                sudo yum install -y nodejs npm 2>/dev/null \
+                    && info "Node.js instalado via yum" \
+                    || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            fi
+            ;;
+        pacman)
+            sudo pacman -Sy --noconfirm nodejs npm 2>/dev/null \
+                && info "Node.js instalado via pacman" \
+                || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            ;;
+        zypper)
+            sudo zypper install -y nodejs npm 2>/dev/null \
+                && info "Node.js instalado via zypper" \
+                || warn "No se pudo instalar Node.js — instalalo manual: https://nodejs.org"
+            ;;
+        *)
+            warn "Gestor de paquetes no reconocido. Instalá Node.js manualmente:"
+            warn "  https://nodejs.org/en/download/"
+            ;;
+    esac
+
+    # Verificar npm también
+    if command -v npm &>/dev/null; then
+        info "npm $(npm --version) instalado"
+    fi
+fi
+
+# ══════════════════════════════════════════════════════════════════════
+# 4. Verificar extensiones PHP
+# ══════════════════════════════════════════════════════════════════════
+step "4. Verificando extensiones PHP"
 explain "Reviso una por una las extensiones que el dashboard necesita."
 explain "Si alguna falta, instalala con: sudo apt install phpX.X-nombre"
 
@@ -262,7 +317,7 @@ done
 # ══════════════════════════════════════════════════════════════════════
 # 4. Configurar .env
 # ══════════════════════════════════════════════════════════════════════
-step "4. Configurando .env"
+step "5. Configurando .env"
 explain "El archivo .env guarda las credenciales de MySQL de forma segura."
 explain "Voy a copiar .env.example → .env y pedirte los datos."
 
@@ -322,7 +377,7 @@ DB_NAME=${DB_NAME:-apache-dashboard}; DB_USER=${DB_USER:-root}; DB_PASS=${DB_PAS
 # ══════════════════════════════════════════════════════════════════════
 # 5. Crear base de datos MySQL
 # ══════════════════════════════════════════════════════════════════════
-step "5. Creando base de datos '$DB_NAME'"
+step "6. Creando base de datos '$DB_NAME'"
 explain "El dashboard guarda usuarios, proyectos y configuraciones en MySQL."
 explain "Voy a crear la base de datos '$DB_NAME' si no existe todavía."
 
@@ -347,7 +402,7 @@ fi
 # ══════════════════════════════════════════════════════════════════════
 # 6. Actualizar .htaccess
 # ══════════════════════════════════════════════════════════════════════
-step "6. Configurando auto_prepend_file"
+step "7. Configurando auto_prepend_file"
 explain "El dashboard protege los subdirectorios (WordPress, etc.) ejecutando"
 explain "un archivo de autenticación ANTES de cada página PHP. Esto se llama"
 explain "'auto_prepend_file' y se configura en .htaccess con una ruta absoluta."
@@ -367,7 +422,7 @@ fi
 # ══════════════════════════════════════════════════════════════════════
 # 7. Seed de datos iniciales
 # ══════════════════════════════════════════════════════════════════════
-step "7. Sembrando datos iniciales"
+step "8. Sembrando datos iniciales"
 explain "El seed crea el usuario administrador por defecto y las tablas"
 explain "si no existen todavía (no borra nada si ya están creadas)."
 
@@ -377,7 +432,7 @@ php "$SEED" 2>/dev/null && info "Seed ejecutado correctamente" \
 # ══════════════════════════════════════════════════════════════════════
 # 8. Configurar Apache VirtualHost
 # ══════════════════════════════════════════════════════════════════════
-step "8. Configurando Apache"
+step "9. Configurando Apache"
 explain "Apache necesita saber dónde está el proyecto (DocumentRoot) y que"
 explain "puede usar archivos .htaccess (AllowOverride All)."
 
