@@ -203,7 +203,31 @@ final class ProjectCreator
     }
 
     /**
-     * Crea un proyecto HTML vanilla (sin bundler).
+     * Verifica si una base de datos MySQL ya existe.
+     *
+     * @param string $dbName Nombre de la base de datos
+     * @return bool true si la base de datos existe
+     */
+    public function databaseExists(string $dbName): bool
+    {
+        $host = $_ENV['DB_HOST'] ?? 'localhost';
+        $port = $_ENV['DB_PORT'] ?? '3306';
+        $user = $_ENV['DB_USER'] ?? 'juanvs23';
+        $pass = $_ENV['DB_PASS'] ?? '';
+        try {
+            $pdo = new \PDO("mysql:host={$host};port={$port}", $user, $pass, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
+            $stmt = $pdo->prepare('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?');
+            $stmt->execute([$dbName]);
+            return $stmt->fetchColumn() !== false;
+        } catch (\Throwable) {
+            return false; // Si no podemos conectar, asumimos que no existe
+        }
+    }
+
+    /**
+     * Crea una base de datos MySQL si no existe.
      */
     private function createDatabase(string $dbName): void
     {

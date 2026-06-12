@@ -12,15 +12,18 @@ Panel de administración centralizado para entornos de **desarrollo y staging** 
 ## Características
 
 - **Login MySQL** con rate limiting (5 intentos / 15 min) y bcrypt
-- **Gestión de usuarios** con niveles admin/cliente y CRUD desde el dashboard
+- **RBAC con 8 permisos dinámicos** — niveles admin, operator, revisor, client con permisos granulares
+- **Gestión de usuarios** con CRUD desde el dashboard y perfil propio
+- **Crear proyectos desde la UI** — HTML (vanilla/Vite), WordPress, Laravel, clonar desde GitHub
+- **Gestión npm integrada** — instalar dependencias, iniciar/detener dev server, proxy Vite automático
 - **Listado automático** de proyectos basado en archivos `user-data.txt`
-- **Asignación de proyectos** — cada usuario cliente ve solo sus proyectos
-- **Control de acceso** — flag `acept_login` por proyecto para habilitar/deshabilitar botones
+- **Asignación de proyectos** — cada usuario ve solo sus proyectos asignados
 - **Auto-login a WordPress** — un click sin pasar por `wp-login.php`
 - **Protección de subdirectorios** — requieren cookie del dashboard vía `auth-check.php`
 - Información del servidor (PHP, SO, disco, servicios)
 - Badges por tipo de proyecto (WordPress, Laravel, Symfony, phpMyAdmin, static)
 - Sesión persistente por cookie (7 días)
+- Arquitectura limpia (Clean Architecture) con 212 tests PHPUnit
 
 ## Requisitos
 
@@ -49,6 +52,15 @@ El script `setup.sh` instala automáticamente todo lo necesario en:
 | Composer | 2.x | Solo para dev (PHPUnit) |
 | Bootstrap | 5.x | Incluido en `assets/` |
 
+**Opcionales** (para crear proyectos desde el dashboard):
+
+| Herramienta | Para |
+|-------------|------|
+| Git | Clonar repositorios desde GitHub |
+| Node.js + npm | Proyectos con Vite.js, gestión npm |
+| Composer | Crear proyectos Laravel |
+| WP-CLI | Crear proyectos WordPress |
+
 > ⚠️ **Importante**: el `.htaccess` usa `php_value auto_prepend_file`. Esta directiva
 > **solo funciona con `mod_php`** (Apache + PHP como módulo). Si usás PHP-FPM, el
 > `auto_prepend_file` debe configurarse en el VirtualHost con `php_admin_value`.
@@ -70,10 +82,15 @@ El script `setup.sh` instala automáticamente todo lo necesario en:
 | Extensión | Uso |
 |-----------|-----|
 | `pdo_mysql` | Conexión a MySQL |
-| `openssl` | `random_bytes()` para UUIDs |
-| `mbstring` | Manejo de strings |
+| `openssl` | `random_bytes()` y bcrypt |
+| `mbstring` | Manejo de strings multibyte |
 | `session` | Rate limiter y PHP sessions |
 | `json` | Codificación de respuestas |
+| `gd` | Manipulación de imágenes (WordPress) |
+| `zip` | Extracción de archivos (Composer, WP-CLI) |
+| `intl` | Internacionalización (Laravel) |
+| `curl` | Descargas HTTP (WP-CLI, GitHub) |
+| `xml` | Parsing XML (WordPress, Laravel) |
 
 ## Instalación
 
@@ -92,15 +109,17 @@ El script instala TODO lo necesario: Apache, PHP 8.0+, MySQL, extensiones, módu
 | Paso | Acción |
 |:---:|---|
 | 1 | Detecta la distro (Ubuntu, Debian, Fedora, etc.) y el package manager (`apt`, `dnf`, etc.) |
-| 2 | Si no hay PHP 8.0+, lo instala junto con Apache, MySQL y todas las extensiones |
-| 3 | Activa `mod_rewrite` y `mod_php` en Apache |
-| 4 | Verifica una a una las 12 extensiones PHP necesarias |
-| 5 | Crea `.env` pidiéndote las credenciales de MySQL de forma interactiva |
-| 6 | Crea la base de datos y el usuario MySQL (si no es root) |
-| 7 | Actualiza el `.htaccess` con la ruta absoluta real de `auth-check.php` |
-| 8 | Ejecuta `seed.php` (crea usuario admin por defecto) |
-| 9 | Configura el VirtualHost de Apache (`DocumentRoot` + `AllowOverride All`) |
-| 10 | Reinicia Apache y muestra el resumen final |
+| 2 | Si no hay PHP 8.0+, lo instala junto con Apache, MySQL y las 10 extensiones |
+| 3 | Instala Git y Node.js (condicional — solo si no existen) |
+| 4 | Activa `mod_rewrite`, `mod_php` y `mod_proxy_http` en Apache |
+| 5 | Verifica una a una las extensiones PHP necesarias |
+| 6 | Crea `.env` pidiéndote las credenciales de MySQL de forma interactiva |
+| 7 | Crea la base de datos y el usuario MySQL (si no es root) |
+| 8 | Actualiza el `.htaccess` con la ruta absoluta real de `auth-check.php` |
+| 9 | Ejecuta el seed (crea niveles, permisos y usuarios por defecto) |
+| 10 | Configura el VirtualHost de Apache (`DocumentRoot` + `AllowOverride All`) |
+| 11 | Configura sudoers para que www-data pueda ejecutar npm |
+| 12 | Reinicia Apache y muestra el resumen final |
 
 #### Significado de los íconos
 
@@ -164,54 +183,37 @@ sudo systemctl restart apache2
 ### Primer acceso
 
 El sistema crea automáticamente las tablas al conectar por primera vez (auto-migrate).
-Para seedear datos iniciales, ejecutá `seed.php`:
+Para seedear datos iniciales, ejecutá el seed desde el autoloader:
 
 ```bash
-php /ruta/al/proyecto/seed.php
+php -r "require 'dashboard-logic/bootstrap.php'; \Dashboard\Database\Seed::run(\Dashboard\Database\Connection::get());"
 ```
 
-Esto crea:
+Esto crea los niveles (admin, operator, revisor, client), los 8 permisos del sistema, y usuarios de prueba con contraseñas por defecto.
 
-| Usuario | Email | Contraseña | Nivel |
-|---------|-------|------------|-------|
-| Admin | `admin@admin.com` | `Admin123` | admin |
-| Cliente | `cliente@test.com` | `cliente123` | client |
-
-> ⚠️ **Cambiá la contraseña de `admin@admin.com` después del primer login.**
+> ⚠️ **Cambiá las contraseñas por defecto después del primer login.**
 > Creá tu propio usuario admin desde el dashboard (Usuarios → Crear Usuario)
-> y luego eliminá o cambiá la clave del usuario por defecto.
+> y luego eliminá o cambiá la clave de los usuarios de prueba.
 
 ### Crear proyectos desde el dashboard
 
-Los administradores pueden crear proyectos directamente desde la interfaz web. No hace falta SSH.
+Los administradores pueden crear proyectos directamente desde la interfaz web:
 
 1. Andá a la pestaña **🆕 Nuevo Proyecto** (solo visible para admin)
-2. Elegí el tipo de proyecto:
-   - **🌐 HTML** — Proyecto estático con `index.html`, `assets/css/`, `assets/js/`
-   - **📝 WordPress** — Instalación completa con WP-CLI
+2. Elegí el tipo: **HTML** (vanilla o Vite.js), **WordPress**, **Laravel**, o **Clonar desde GitHub**
 3. Completá los datos y clickeá **Crear**
 
-> 💡 El proyecto se crea con `git init`, `.gitignore` y permisos listos para desarrollar.
+> 💡 Cada proyecto se crea con `git init`, `.gitignore`, `chmod -R 0777`, y `user-data.txt` listo para el dashboard.
 
-#### Proyecto HTML — opciones extra
+#### Tipos de proyecto
 
-| Opción | Descripción |
-|---|---|
-| ⚡ Vite.js | Agrega `package.json`, `vite.config.js` y estructura `src/`. Ideal para JS moderno |
-| 📥 Clonar GitHub | Clona un repositorio público en vez de crear desde cero. Solo HTTPS |
-
-#### Proyecto WordPress — datos necesarios
-
-| Campo | Ejemplo |
-|---|---|
-| Nombre | Mi Blog |
-| Directorio | mi-blog |
-| Base de datos | wp_mi_blog |
-| Título del sitio | Mi Blog Personal |
-| Email admin | admin@admin.com |
-| Contraseña admin | contraseña segura |
-
-> 🔐 Se agrega `define('FS_METHOD', 'direct')` para evitar pedir FTP al instalar plugins.
+| Tipo | Requiere | Descripción |
+|---|---|---|
+| 🌐 HTML vanilla | Nada | `index.html` + `assets/css/` + `assets/js/` |
+| ⚡ HTML + Vite.js | Node.js + npm | `package.json`, `vite.config.js`, `src/` |
+| 📝 WordPress | WP-CLI + MySQL | `wp core download` + `wp config create` + `wp core install` |
+| 🔷 Laravel | Composer + MySQL | `composer create-project laravel/laravel` |
+| 📥 Clonar GitHub | Git | `git clone` + auto-detección de tipo + `npm install` automático |
 
 ### Gestionar proyectos con Node.js
 
@@ -280,15 +282,24 @@ Esto significa que:
 
 - **No necesitás correr migraciones manualmente** — al abrir el dashboard se crea todo solo
 - **Si agregás una columna nueva** a `Migration.php`, como la tabla ya existe, `IF NOT EXISTS` no la crea — en ese caso ejecutá un `ALTER TABLE` manual o recreá la DB
-- **`seed.php`** solo se corre una vez para poblar datos iniciales (usuarios admin y cliente)
+- **El seed** solo se corre una vez para poblar datos iniciales (niveles, permisos y usuarios)
 
 **Tablas creadas:**
 
 ```
-levels          — niveles de usuario (admin, client, etc.)
+levels          — niveles de usuario
   ├── levelsID CHAR(36) PK
-  ├── level_name VARCHAR(255)
-  └── level_type TINYINT (0=admin, 1=client)
+  ├── level_name VARCHAR(255) UNIQUE
+  └── level_type TINYINT (0=admin con todos los permisos)
+
+permissions     — catálogo de permisos (8 permisos)
+  ├── id INT PK AUTO_INCREMENT
+  ├── perm_key VARCHAR(64) UNIQUE
+  └── perm_label VARCHAR(128)
+
+level_permissions — permisos asignados a cada nivel
+  ├── levelID CHAR(36) FK → levels
+  └── perm_id INT FK → permissions
 
 USERS           — usuarios del sistema
   ├── userID CHAR(36) PK
@@ -302,6 +313,14 @@ Project         — proyectos y asignaciones
   ├── project_name TEXT
   ├── user_own CHAR(36) NULL FK → USERS.userID
   └── acept_login TINYINT(1) DEFAULT 0
+
+auth_logs       — registro de accesos (login/logout)
+  ├── id INT PK AUTO_INCREMENT
+  ├── email VARCHAR(255)
+  ├── action VARCHAR(20) — login_success | login_failed | logout
+  ├── ip_address VARCHAR(45)
+  ├── user_agent VARCHAR(512) NULL
+  └── created_at TIMESTAMP
 ```
 
 ### `user-data.txt`
@@ -318,69 +337,75 @@ type: wordpress          ← define el badge (wordpress, laravel, symfony, phpmy
 
 ```
 /
-├── index.php                           # Orquestador principal
-├── seed.php                            # Seeder de datos iniciales
-├── .env                                # Credenciales (NO trackeado)
-├── .env.example                        # Template de credenciales
+├── index.php                           # Orquestador principal (ruteo + shell HTML)
+├── fix-admin.php                       # CLI: resetear usuario admin
+├── .env / .env.example                 # Credenciales (NO trackeado)
 ├── .htaccess                           # Reglas Apache + auto_prepend_file
-├── assets/                             # Bootstrap 5
-│   ├── css/
-│   └── js/
+├── auth-check.php                      # Auth para subdirectorios
+├── robots.txt                          # Bloqueo de crawlers
+├── assets/                             # Bootstrap 5 (CSS + JS)
 ├── dashboard-logic/
-│   ├── bootstrap.php                   # Session, autoload PSR-4, constantes
+│   ├── bootstrap.php                   # Autoload PSR-4 + sesión + constantes
 │   ├── env-loader.php                  # Carga .env en $_ENV
-│   ├── helpers.php                     # Crypto, get_os, type_badge
-│   ├── rate-limiter.php                # Control de intentos de login
-│   ├── auth.php                        # Login MySQL, cookies, sesiones
-│   ├── auth-check.php                  # Prepend de auth para subdirectorios
-│   ├── projects.php                    # Listado de proyectos (filesystem)
-│   ├── user-management.php             # CRUD usuarios + asignación proyectos
-│   ├── wp-auto-login.php               # Auto-login WordPress
-│   ├── composer.json                   # PHPUnit (dev)
+│   ├── Domain/
+│   │   ├── Entity/                     # User, Level, Project, Permission
+│   │   ├── ValueObject/                # Email, LevelType
+│   │   └── Exception/                  # DomainException
+│   ├── Application/
+│   │   ├── UseCase/                    # 13 Use Cases (Auth, User, Project, Level, Permission)
+│   │   └── Repository/                # Interfaces de repositorio
+│   ├── Infrastructure/
+│   │   ├── Persistence/               # Repositorios MySQL (User, Level, Project, Permission)
+│   │   ├── Filesystem/                # ProjectScanner, ProjectCreator
+│   │   ├── Session/                   # SessionManager (rate limiting)
+│   │   └── Auth/                      # AuthContext, LegacyReader
+│   ├── Presentation/
+│   │   ├── Controller/                # AuthController, DashboardController, AdminController, ProfileController
+│   │   ├── Router.php                 # Ruteo de requests
+│   │   └── ServiceContainer.php       # DI container con lazy init
 │   ├── Database/
-│   │   ├── Connection.php              # Singleton PDO (auto-migrate)
-│   │   ├── Migration.php               # Schema DDL
-│   │   └── Seed.php                    # Datos iniciales
-│   ├── Tests/
-│   │   └── bootstrap.php               # Bootstrap de PHPUnit
-│   └── views/
-│       ├── dashboard.php               # Vista principal autenticada
-│       ├── login.php                   # Formulario de login
-│       ├── user-management.php         # Gestión de usuarios y proyectos
-│       └── components/
-│           ├── server-info.php         # Info del servidor
-│           └── project-card.php        # Tarjeta de proyecto
-├── docs/
-│   ├── mejoras.md
-│   └── staging-checklist.md
+│   │   ├── Connection.php             # Singleton PDO + auto-migrate
+│   │   ├── Migration.php              # Schema DDL
+│   │   └── Seed.php                   # Datos iniciales idempotentes
+│   ├── Tests/                         # PHPUnit (212 tests, 506 assertions)
+│   └── views/                         # Vistas PHP puras
+│       ├── dashboard.php
+│       ├── login.php
+│       └── components/                # server-info, project-card, management-header/footer
+├── views/                             # Vistas compartidas (partials)
+├── docs/                              # Documentación y roadmaps
+├── migrations/                        # Migraciones SQL manuales
 ├── README.md
-├── CHANGELOG.md
-└── .gitignore
+└── CHANGELOG.md
 ```
 
 ## Flujo de autenticación
 
 ```
-Request a /twilight/wp-admin/
+Request a /proyecto/wp-admin/
   → .htaccess (AllowOverride)
-  → auto_prepend_file → dashboard-logic/auth-check.php
-    ├─ ¿Es index.php, wp-auto-login o assets/? → permite
-    ├─ ¿Cookie project_user válida? → permite, carga WordPress
+  → auto_prepend_file → auth-check.php
+    ├─ ¿Es index.php, assets/ o crawler conocido (Lighthouse)? → permite
+    ├─ ¿Cookie project_user válida? → AuthContext verifica contra DB → permite
     └─ No → redirige a /index.php?redirect=...
 
 Request a /
-  → index.php → auth.php
-    ├─ Login: email + password → query USERS, password_verify()
-    ├─ Cookie: base64(userID UUID), 7 días
-    └─ Cada request: lookup por UUID en USERS, obtiene nivel y permisos
+  → index.php → ServiceContainer → AuthController
+    ├─ Login: LoginUseCase → Email ValueObject + UserRepository + bcrypt
+    ├─ Cookie: project_user con email del usuario, 7 días
+    └─ Cada request: AuthContext valida cookie, carga usuario, verifica permisos vía can()
 ```
 
-**Niveles de acceso:**
+**Niveles y permisos (RBAC):**
 
-| Nivel | Ve todos los proyectos | Ve botones Acceder/WP Admin | Accede a gestión de usuarios |
-|-------|:---:|:---:|:---:|
-| admin (`level_type=0`) | ✅ | ✅ siempre | ✅ |
-| client (`level_type=1`) | ❌ solo asignados | ❌ solo si `acept_login=1` | ❌ |
+| Nivel | Permisos |
+|---|---|
+| admin | Todos (8/8) |
+| operator | users.manage, projects.*, server.view, profile.edit |
+| revisor | projects.view_all, projects.acept_login, profile.edit (solo lectura) |
+| client | profile.edit |
+
+Los permisos son dinámicos — se gestionan desde **Usuarios → Niveles y Permisos** en el dashboard.
 
 ## Auto-login WordPress
 
@@ -393,11 +418,41 @@ El auto-login busca el primer administrador en la DB de WordPress y genera una c
 
 ## Seguridad
 
-- El `.htaccess` bloquea acceso directo a `.env` y `dashboard-logic/` (solo `wp-auto-login.php` pasa)
+- El `.htaccess` bloquea acceso directo a `.env`, `dashboard-logic/`, y archivos sensibles
 - Las contraseñas se almacenan con bcrypt en la tabla USERS
-- La cookie `project_user` contiene base64(UUID) — se valida contra la DB en cada request
+- La cookie `project_user` se valida contra la DB en cada request vía `AuthContext`
 - Rate limiting en login (5 intentos, 15 min de bloqueo, por sesión PHP)
 - Las redirecciones post-login validan que sean internas (empiecen con `/`)
+- `robots.txt` con `Disallow: /` + bloqueo de crawlers vía `.htaccess` (403)
+- `auth-check.php` permite bypass para Google PageSpeed, Lighthouse y GTmetrix
+- Permisos RBAC dinámicos: 8 permisos granulares gestionables desde la UI
+- Protección de nivel admin: no se puede editar ni eliminar desde la UI
+
+## Hardening para VPS / staging
+
+Si el dashboard se expone a internet (incluso en staging), estas medidas son responsabilidad de quien despliega. El proyecto no las aplica automáticamente porque son específicas del entorno.
+
+### 🔴 Recomendado antes de exponer
+
+| Medida | Guía |
+|---|---|
+| **HTTPS** (Let's Encrypt) | `certbot --apache -d tudominio.com`. Las cookies y contraseñas viajan cifradas. |
+| **Firewall** (ufw) | Solo puertos 22, 80, 443. `ufw default deny incoming && ufw allow ssh/http/https && ufw enable` |
+| **Restringir pgAdmin4** | Agregar `AuthType Basic` + `htpasswd` en el `Location /pgadmin4` del VirtualHost. O limitar por IP. |
+| **Credenciales fuertes** | Cambiar TODOS los valores dummy del `.env` por contraseñas generadas. Nada de `Admin123`. |
+
+### 🟡 Recomendaciones adicionales
+
+| Medida | Guía |
+|---|---|
+| **Usuarios de BD dedicados** | Crear usuarios MySQL con permisos mínimos por aplicación. No usar `root` para todo. |
+| **Rate limiting por IP** (Fail2ban) | Responsabilidad del desarrollador. Instalar fail2ban en el servidor y configurar una jail para el dashboard. Los intentos fallidos ya se registran en `auth_logs` para monitoreo. |
+| **Permisos de archivos** | En producción: `chown root:www-data` + `chmod 755`. En staging colaborativo mantener 0777. |
+| **Cerrar puertos de BD** | `bind-address = 127.0.0.1` en `my.cnf` y `postgresql.conf`. MySQL y PostgreSQL solo deberían escuchar en localhost. |
+
+### 📋 Checklist completa
+
+Ver [`docs/staging-checklist.md`](docs/staging-checklist.md) para el detalle completo con comandos.
 
 ## Licencia
 

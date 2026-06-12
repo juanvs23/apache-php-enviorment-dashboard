@@ -75,5 +75,19 @@ final class Migration
                 CONSTRAINT fk_lp_perm  FOREIGN KEY (perm_id) REFERENCES permissions (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ');
+
+        $pdo->exec('
+            CREATE TABLE IF NOT EXISTS auth_logs (
+                id         INT AUTO_INCREMENT PRIMARY KEY,
+                email      VARCHAR(255) NOT NULL,
+                action     VARCHAR(20)  NOT NULL,
+                ip_address VARCHAR(45)  NOT NULL,
+                user_agent VARCHAR(512) DEFAULT NULL,
+                created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_email (email),
+                KEY idx_action (action),
+                KEY idx_created (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ');
     }
 }

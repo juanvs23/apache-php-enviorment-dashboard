@@ -16,6 +16,7 @@ use Dashboard\Application\UseCase\User\DeleteUserUseCase;
 use Dashboard\Application\UseCase\User\UpdateUserUseCase;
 use Dashboard\Domain\Entity\User;
 use Dashboard\Infrastructure\Auth\AuthContext;
+use Dashboard\Infrastructure\Auth\AuthLogger;
 use Dashboard\Infrastructure\Persistence\LegacyReader;
 
 /**
@@ -123,6 +124,13 @@ final class AdminController
         // Auth data para management-header.php
         $authUser  = $this->authContext->currentUser();
         $canManage = $authUser ? $this->authContext->can('users.manage', $authUser) : false;
+
+        // ─── Logs de autenticación ──────────────────────────────────
+        $logs = [];
+        if ($tab === 'logs') {
+            $logger = new AuthLogger();
+            $logs = $logger->recent(100);
+        }
 
         require __DIR__ . '/../../views/user-management.php';
     }

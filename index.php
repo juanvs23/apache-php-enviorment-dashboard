@@ -12,7 +12,6 @@
  */
 
 require_once __DIR__ . '/dashboard-logic/bootstrap.php';
-require_once __DIR__ . '/dashboard-logic/helpers.php';
 
 use Dashboard\Infrastructure\Auth\AuthContext;
 use Dashboard\Infrastructure\Session\SessionManager;
@@ -41,6 +40,11 @@ if ($rate_limited && !$authenticated) {
 
 // ─── Logout via AuthController ─────────────────────────────────────────────
 if (isset($_GET['logout'])) {
+    // Log the logout before redirect
+    if ($authenticated && $authUser) {
+        $logger = ServiceContainer::get(\Dashboard\Infrastructure\Auth\AuthLogger::class);
+        $logger->log($authUser['email'] ?? 'unknown', 'logout');
+    }
     $authController = ServiceContainer::get(AuthController::class);
     $authController->logout($script_name); // Hace redirect internamente
     exit;
@@ -131,7 +135,7 @@ if (isset($_GET['npm_action']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// ─── Crear proyecto HTML (solo admin autenticado) ──────────────────────────
+// ─── Crear proyecto (solo admin autenticado) ───────────────────────────────
 if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html', 'laravel', 'wordpress']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($authenticated && $isAdmin) {
         $name = trim($_POST['project_name'] ?? '');
@@ -158,21 +162,32 @@ if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html',
 
         try {
             $creator = ServiceContainer::get(\Dashboard\Infrastructure\Filesystem\ProjectCreator::class);
+            $saveProject = ServiceContainer::get(\Dashboard\Application\UseCase\Project\SaveProjectUseCase::class);
+
+            // ── Crear en filesystem ──────────────────────────────────
             if ($repo !== '') {
                 $creator->createFromGithub($name, $dir, $repo, $branch);
-                header("Location: /?flash=success&msg=" . urlencode("Proyecto clonado: {$name}"));
+                $successMsg = "Proyecto clonado: {$name}";
             } elseif ($_GET['create_project'] === 'html') {
                 $creator->createHtml($name, $dir, $useVite);
                 $viteMsg = $useVite ? ' con Vite.js' : '';
-                header("Location: /?flash=success&msg=" . urlencode("Proyecto creado: {$name}{$viteMsg}"));
+                $successMsg = "Proyecto creado: {$name}{$viteMsg}";
             } elseif ($_GET['create_project'] === 'laravel') {
                 $dbName = trim($_POST['db_name'] ?? '');
                 if ($dbName === '') {
                     header("Location: /?flash=danger&msg=" . urlencode('El nombre de la base de datos es requerido'));
                     exit;
                 }
+                if (!preg_match('/^[a-zA-Z_]\w*$/', $dbName)) {
+                    header("Location: /?flash=danger&msg=" . urlencode('Nombre de base de datos no válido. Solo letras, números y guiones bajos. No puede empezar con número.'));
+                    exit;
+                }
+                if ($creator->databaseExists($dbName)) {
+                    header("Location: /?flash=danger&msg=" . urlencode("La base de datos '{$dbName}' ya existe. Elegí otro nombre."));
+                    exit;
+                }
                 $creator->createLaravel($name, $dir, $dbName);
-                header("Location: /?flash=success&msg=" . urlencode("Proyecto Laravel creado: {$name}"));
+                $successMsg = "Proyecto Laravel creado: {$name}";
             } elseif ($_GET['create_project'] === 'wordpress') {
                 $dbName    = trim($_POST['db_name'] ?? '');
                 $title     = trim($_POST['site_title'] ?? '');
@@ -182,9 +197,23 @@ if (isset($_GET['create_project']) && in_array($_GET['create_project'], ['html',
                     header("Location: /?flash=danger&msg=" . urlencode('Todos los campos son requeridos'));
                     exit;
                 }
+                if (!preg_match('/^[a-zA-Z_]\w*$/', $dbName)) {
+                    header("Location: /?flash=danger&msg=" . urlencode('Nombre de base de datos no válido. Solo letras, números y guiones bajos. No puede empezar con número.'));
+                    exit;
+                }
+                if ($creator->databaseExists($dbName)) {
+                    header("Location: /?flash=danger&msg=" . urlencode("La base de datos '{$dbName}' ya existe. Elegí otro nombre."));
+                    exit;
+                }
                 $creator->createWordpress($name, $dir, $dbName, $title, $wpEmail, $wpPass);
-                header("Location: /?flash=success&msg=" . urlencode("Proyecto WordPress creado: {$name}"));
+                $successMsg = "Proyecto WordPress creado: {$name}";
             }
+
+            // ── Registrar en la base de datos del dashboard ──────────
+            $projectId = \vsprintf('%s%s-%s-%s-%s-%s%s%s', \str_split(\bin2hex(\random_bytes(16)), 4));
+            $saveProject->create($projectId, $dir);
+
+            header("Location: /?flash=success&msg=" . urlencode($successMsg));
         } catch (\RuntimeException $e) {
             header("Location: /?flash=danger&msg=" . urlencode($e->getMessage()));
         }
@@ -218,18 +247,42 @@ if (isset($_GET['delete_project']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: /?flash={$t}&msg=" . urlencode($m));
     exit;
 }
+// ─── AJAX: check if database exists (solo admin autenticado) ────────────────
+if (isset($_GET['check_db']) && $_GET['check_db'] !== '') {
+    header('Content-Type: application/json');
+    if (!$authenticated || !$isAdmin) {
+        echo json_encode(['error' => 'Unauthorized']);
+        exit;
+    }
+    $dbName = trim($_GET['check_db']);
+    if (!preg_match('/^[a-zA-Z_]\w*$/', $dbName)) {
+        echo json_encode(['exists' => false, 'error' => 'Invalid name format']);
+        exit;
+    }
+    $creator = ServiceContainer::get(\Dashboard\Infrastructure\Filesystem\ProjectCreator::class);
+    echo json_encode(['exists' => $creator->databaseExists($dbName)]);
+    exit;
+}
 // ─── Login via AuthController ──────────────────────────────────────────────
 $isLoginAttempt = ($_POST['email'] ?? '') !== '' && ($_POST['password'] ?? '') !== '';
 
 if (!$authenticated && $isLoginAttempt) {
+    $loginEmail = trim($_POST['email'] ?? '');
     if (!$rate_limited) {
         $authController = ServiceContainer::get(AuthController::class);
         $result = $authController->login();
+        $logger = ServiceContainer::get(\Dashboard\Infrastructure\Auth\AuthLogger::class);
         if ($result['success']) {
+            $logger->log($loginEmail, 'login_success');
             header('Location: ' . $redirect_target);
             exit;
         }
+        $logger->log($loginEmail, 'login_failed');
         $error = $result['error'];
+    } else {
+        // Rate limited — still log the attempt
+        $logger = ServiceContainer::get(\Dashboard\Infrastructure\Auth\AuthLogger::class);
+        $logger->log($loginEmail, 'login_failed');
     }
 }
 
@@ -314,5 +367,6 @@ function togglePassword(inputId, btn) {
     btn.textContent = isPassword ? 'Ocultar' : 'Mostrar';
 }
 </script>
+<script src="./assets/js/create-project-ux.js"></script>
 </body>
 </html>

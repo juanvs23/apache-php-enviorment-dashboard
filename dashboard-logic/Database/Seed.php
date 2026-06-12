@@ -9,8 +9,14 @@ use PDO;
 /**
  * Seed initial data for the dashboard database.
  *
- * Creates the default admin level and admin user.
+ * Creates default levels, permissions, and users.
  * Safe to run multiple times (uses INSERT IGNORE).
+ *
+ * ⚠️ ARCHITECTURE NOTE: This class uses PDO directly instead of Use Cases.
+ * This is INTENTIONAL — Seed runs during Connection::get() auto-migration,
+ * BEFORE the ServiceContainer and Use Cases are wired up. At this point
+ * only PDO is guaranteed to be available. Using Use Cases here would
+ * create a circular dependency (Use Cases → ServiceContainer → Connection → Seed).
  */
 final class Seed
 {

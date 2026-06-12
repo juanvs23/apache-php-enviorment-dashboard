@@ -61,7 +61,13 @@
             <div class="small" style="color: #8b949e;">
                 <div class="d-flex justify-content-between py-1">
                     <span>SO</span>
-                    <code style="color: #58a6ff;"><?= get_os() ?></code>
+                    <code style="color: #58a6ff;"><?php
+                        $os = php_uname('s');
+                        if (str_contains($os, 'Linux'))   echo 'Linux';
+                        elseif (str_contains($os, 'Windows')) echo 'Windows';
+                        elseif (str_contains($os, 'Darwin'))  echo 'Mac';
+                        else echo 'Desconocido';
+                    ?></code>
                 </div>
                 <div class="d-flex justify-content-between py-1">
                     <span>Host</span>

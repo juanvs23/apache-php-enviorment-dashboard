@@ -7,7 +7,8 @@
 - [x] **Filtro de proyectos por usuario** — usuarios cliente solo ven proyectos asignados
 - [x] **Control de acceso por proyecto** — flag `acept_login` habilita/deshabilita botones de acceso y WP Admin
 - [x] **Rediseño del dashboard** — dark theme, cards en grid responsive, tabs en lugar de accordions
-- [x] **Gestión de proyectos** — crear, editar y eliminar proyectos con asignación de usuarios
+- [x] **Gestión de proyectos** — crear, editar y eliminar proyectos con asignación de usuarios. Auto-save a MySQL desde la UI.
+- [x] **UX crear proyectos** — validación client-side onblur, auto-slug nombre→directorio, loading spinner, detección de DB existente (async)
 - [ ] **phpMyAdmin** — instalar y configurar desde el zip descargado, o agregar detección de instalaciones manuales en subdirectorios
 - [ ] **Redis / Memcached** — detectar si están instalados y mostrar estado
 - [ ] **Logs en vivo** — cola de logs de Apache accesible desde el dashboard (tail + WebSocket o polling)
@@ -36,7 +37,7 @@
 ## Código
 
 - [x] **Tests iniciales** — estructura de tests con PHPUnit en `dashboard-logic/Tests/`
-- [ ] **Cobertura de tests** — tests para auth, rate-limiter, helpers, user-management
+- [x] **Cobertura de tests** — 212 tests, 506 assertions. Domain, Application, Infrastructure, Presentation, Integration. ProjectCreator cubierto.
 - [ ] **Type hints** — agregar tipos a todas las funciones
 - [ ] **Linting** — configurar PHP_CodeSniffer o Psalm
 - [ ] **Refactor server-info.php** — extraer la lógica de detección de servicios a una clase separada en lugar de inline en la vista

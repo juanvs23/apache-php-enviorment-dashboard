@@ -25,6 +25,7 @@ use Dashboard\Application\UseCase\User\ListUsersUseCase;
 use Dashboard\Application\UseCase\User\UpdateUserUseCase;
 use Dashboard\Database\Connection;
 use Dashboard\Infrastructure\Auth\AuthContext;
+use Dashboard\Infrastructure\Auth\AuthLogger;
 use Dashboard\Infrastructure\Filesystem\ProjectCreator;
 use Dashboard\Infrastructure\Filesystem\ProjectScanner;
 use Dashboard\Infrastructure\Persistence\LegacyReader;
@@ -183,6 +184,9 @@ final class ServiceContainer
                 self::get(LoginUseCase::class),
                 self::get(SessionManager::class),
             ),
+
+            // ─── Cross-cutting ──────────────────────────────────────
+            AuthLogger::class => fn() => new AuthLogger(),
         ];
     }
 }

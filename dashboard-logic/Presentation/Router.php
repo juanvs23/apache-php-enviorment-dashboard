@@ -92,9 +92,16 @@ final class Router
         // ─── Autenticado: refrescar cookie ─────────────────────
         $this->authContext->refreshCookie();
 
-        // ─── phpinfo ───────────────────────────────────────────
+        // ─── phpinfo (solo admin en modo desarrollo) ──────────────
         if (isset($_GET['phpinfo'])) {
-            \phpinfo();
+            $devMode = ($_ENV['DEV_MODE'] ?? '1') === '1';
+            $authUser = $this->authContext->currentUser();
+            $isAdmin = $authUser && ($authUser['level_type'] ?? 1) === 0;
+            if ($devMode && $this->authContext->isAuthenticated() && $isAdmin) {
+                \phpinfo();
+            } else {
+                echo '<p style="color:#d29922;padding:2rem;font-family:monospace;">⚠️ phpinfo() deshabilitado. Requiere DEV_MODE=1 y autenticación de admin.</p>';
+            }
             return;
         }
 
