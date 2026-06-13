@@ -54,6 +54,14 @@ if (!$authUser || !$canManage) {
                class="management-sidebar-link <?= $tab === 'levels' ? 'active' : '' ?>">
                 🔐 Niveles y Permisos
             </a>
+            <a href="/?users=1&tab=logs"
+               class="management-sidebar-link <?= $tab === 'logs' ? 'active' : '' ?>">
+                📋 Registro de accesos
+            </a>
+            <a href="/?edit_env=1"
+               class="management-sidebar-link">
+                ⚙️ Editor .env
+            </a>
         </div>
     </div>
 

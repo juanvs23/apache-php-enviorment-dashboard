@@ -81,6 +81,18 @@
                     <code class="small" style="color: #e4e6eb;"><?= htmlspecialchars($project['password']) ?></code>
                 </div>
             <?php endif; ?>
+
+            <?php if ($project['user'] || $project['password']): ?>
+                <div class="mt-2 pt-2 border-top border-secondary">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 copy-creds-btn"
+                            data-cred-url="<?= htmlspecialchars($project['dir']) ?>"
+                            data-cred-user="<?= htmlspecialchars($project['user'] ?? '') ?>"
+                            data-cred-pass="<?= htmlspecialchars($project['password'] ?? '') ?>"
+                            data-cred-name="<?= htmlspecialchars($project['name']) ?>">
+                        📋 Copiar credenciales
+                    </button>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>

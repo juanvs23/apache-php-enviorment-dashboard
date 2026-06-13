@@ -119,18 +119,20 @@ Pestaña "Nuevo Proyecto"
 - [x] `git init` automático en todo proyecto nuevo
 - [x] `.htaccess` con proxy reverso a Vite (solo si `use_vite`)
 
-### 🔲 Fase 7 — Testing
+### ✅ Fase 7 — Testing
 
-- [ ] Tests unitarios para `ProjectCreator` (mocked filesystem)
-- [ ] Tests de integración para `createHtml()` (directorio temporal real)
-- [ ] Tests de integración para `createFromGithub()` (repo público de prueba)
+- [x] Tests unitarios para `ProjectCreator` (templates, detectProjectType)
+- [x] Tests de integración para `createHtml()` — vanilla y Vite (directorio temporal real)
+- [x] Tests de integración para `createFromGithub()` — error cases (directorio existente)
+- [x] 33 tests nuevos, 72 assertions, 0 failures
 
-### 🔲 Fase 8 — UX polish
+### ✅ Fase 8 — UX polish
 
-- [ ] Validación client-side en modales (JS)
-- [ ] Spinner/loading durante la creación (puede tardar con composer/npm)
-- [ ] Sugerir slug automáticamente desde el nombre del proyecto
-- [ ] Confirmación antes de crear (¿estás seguro?)
+- [x] Validación client-side en los 3 modales (HTML, Laravel, WordPress)
+- [x] Spinner/loading en botón submit durante la creación
+- [x] Auto-slug: nombre del proyecto → directorio en tiempo real
+- [x] Errores inline con `is-invalid` + `invalid-feedback` debajo de cada campo
+- [x] Foco automático en el primer campo con error
 
 ---
 
@@ -146,16 +148,20 @@ Pestaña "Nuevo Proyecto"
 
 ---
 
-## Rutas del handler (plan)
+## Rutas del handler
 
 ```
 POST /?create_project=html       → ProjectCreator::createHtml() o createFromGithub()
-POST /?create_project=laravel    → ProjectCreator::createLaravel()   (pendiente)
-POST /?create_project=wordpress  → ProjectCreator::createWordpress() (pendiente)
+POST /?create_project=laravel    → ProjectCreator::createLaravel()
+POST /?create_project=wordpress  → ProjectCreator::createWordpress()
 ```
+
+## Estado
+
+✅ **Roadmap completado** — 8 de 8 fases (100%). 212 tests, 506 assertions, 0 failures.
 
 ## Notas
 
-- El `ProjectCreator` ya está implementado pero **no está registrado en ServiceContainer** ni tiene handler en `index.php`. La creación de proyectos HTML desde la UI no funciona end-to-end todavía.
-- Las dependencias (Git, Node, Composer, WP-CLI) son opcionales. Si no están instaladas, el handler debe devolver un error claro.
-- El directorio de proyectos está hardcodeado a `/mnt/vol/projects/apache/`. Debería venir de configuración (`.env`) para ser portable.
+- El `ProjectCreator` está registrado en `ServiceContainer` y los handlers en `index.php` funcionan end-to-end.
+- Las dependencias (Git, Node, Composer, WP-CLI) son opcionales. Si no están instaladas, el handler devuelve un error claro vía flash message.
+- El directorio de proyectos está configurado en `ServiceContainer` al instanciar `ProjectCreator`.

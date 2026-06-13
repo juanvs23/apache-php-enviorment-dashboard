@@ -284,7 +284,9 @@
                                         <code><?= htmlspecialchars($p['user_email']) ?></code>
                                         <?php if ($p['user_name']): ?>
                                             <br><span class="text-info-emphasis ms-3"><?= htmlspecialchars($p['user_name']) ?></span>
-                                        <?php endif; ?>
+
+        <?php endif; ?>
+
                                     <?php else: ?>
                                         <span class="text-warning-emphasis">Sin asignar</span>
                                     <?php endif; ?>
@@ -436,6 +438,58 @@
                 </div>
             </div>
         </div>
+
+        <?php endif; ?>
+
+        <?php if ($tab === 'logs'): ?>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- SECCIÓN LOGS DE ACCESO -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-light small">Últimos <?= count($logs) ?> registros</span>
+        </div>
+
+        <?php if (empty($logs)): ?>
+            <div class="text-muted text-center py-5">
+                <p class="fs-4 mb-1">📋 Sin registros</p>
+                <p class="small">Los accesos aparecerán acá cuando haya actividad de login/logout.</p>
+            </div>
+        <?php else: ?>
+            <div class="table-responsive">
+                <table class="table table-dark table-striped table-hover table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Email</th>
+                            <th>Acción</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($logs as $log): ?>
+                        <tr>
+                            <td class="small text-nowrap"><?= htmlspecialchars($log['created_at']) ?></td>
+                            <td><code><?= htmlspecialchars($log['email']) ?></code></td>
+                            <td>
+                                <?php if ($log['action'] === 'login_success'): ?>
+                                    <span class="badge bg-success">✅ Login</span>
+                                <?php elseif ($log['action'] === 'login_failed'): ?>
+                                    <span class="badge bg-danger">❌ Fallido</span>
+                                <?php elseif ($log['action'] === 'logout'): ?>
+                                    <span class="badge bg-secondary">🚪 Logout</span>
+                                <?php else: ?>
+                                    <span class="badge bg-dark"><?= htmlspecialchars($log['action']) ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td><code class="small"><?= htmlspecialchars($log['ip_address']) ?></code></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
 
         <?php endif; ?>
 

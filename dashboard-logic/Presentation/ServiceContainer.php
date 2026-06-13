@@ -25,6 +25,7 @@ use Dashboard\Application\UseCase\User\ListUsersUseCase;
 use Dashboard\Application\UseCase\User\UpdateUserUseCase;
 use Dashboard\Database\Connection;
 use Dashboard\Infrastructure\Auth\AuthContext;
+use Dashboard\Infrastructure\Auth\AuthLogger;
 use Dashboard\Infrastructure\Filesystem\ProjectCreator;
 use Dashboard\Infrastructure\Filesystem\ProjectScanner;
 use Dashboard\Infrastructure\Persistence\LegacyReader;
@@ -33,6 +34,7 @@ use Dashboard\Infrastructure\Persistence\MySQLPermissionRepository;
 use Dashboard\Infrastructure\Persistence\MySQLProjectRepository;
 use Dashboard\Infrastructure\Persistence\MySQLUserRepository;
 use Dashboard\Infrastructure\Session\SessionManager;
+use Dashboard\Infrastructure\System\ServiceDetector;
 
 /**
  * Contenedor de servicios simple (Service Container).
@@ -183,6 +185,10 @@ final class ServiceContainer
                 self::get(LoginUseCase::class),
                 self::get(SessionManager::class),
             ),
+
+            // ─── Cross-cutting ──────────────────────────────────────
+            AuthLogger::class => fn() => new AuthLogger(),
+            ServiceDetector::class => fn() => new ServiceDetector(),
         ];
     }
 }

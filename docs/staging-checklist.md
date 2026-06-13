@@ -2,35 +2,32 @@
 
 Checklist de seguridad y configuración antes de subir el dashboard a un VPS.
 
-## 🔴 Crítico — hacer antes de subir
+## 🔴 Crítico — responsabilidad del desarrollador (ver README)
 
-- [ ] **HTTPS** con Let's Encrypt
-  ```bash
-  apt install certbot python3-certbot-apache
-  certbot --apache -d tudominio.com
-  ```
-- [ ] **Firewall** — solo puertos 22, 80, 443
-  ```bash
-  ufw default deny incoming
-  ufw allow ssh
-  ufw allow https
-  ufw allow http
-  ufw enable
-  ```
-- [ ] **Restringir pgAdmin4** — por IP, VPN o autenticación básica de Apache
-- [ ] **Cambiar credenciales del `.env`** — nada de valores dummy
+Estas medidas son externas al proyecto. El README tiene la guía completa en la sección "Hardening para VPS / staging".
 
-## 🟡 Muy recomendado
+- [🔗] **HTTPS** con Let's Encrypt → [README](README.md#hardening-para-vps--staging)
+- [🔗] **Firewall** — solo puertos 22, 80, 443 → [README](README.md#hardening-para-vps--staging)
+- [🔗] **Restringir pgAdmin4** → [README](README.md#hardening-para-vps--staging)
+- [🔗] **Cambiar credenciales del `.env`** → [README](README.md#hardening-para-vps--staging)
 
-- [ ] **Deshabilitar phpinfo()** — condicionar a `DEV_MODE` o borrar el link
-- [ ] **Rate limiting IP-based** — Fail2ban contra `/index.php` o migrar a APCu
-- [ ] **Usuarios de base de datos dedicados** — no usar superuser para todo
-- [ ] **Permisos estrictos** — `chown root:www-data`, `chmod 755` en archivos estáticos
-- [ ] **Logging de accesos** — agregar log en `auth.php` con IP y timestamp
+## 🟡 Implementado en el proyecto
 
-## 🟢 Buenas prácticas
+- [x] **phpinfo() protegido** — requiere `DEV_MODE=1` en `.env` + autenticación de admin
+- [x] **Logging de accesos** — tabla `auth_logs`, visible en `?users=1&tab=logs`. Registra login exitoso, fallido y logout con IP y timestamp.
 
-- [ ] **Backup automático diario** — `pg_dumpall` + `mysqldump` comprimidos
-- [ ] **Monitoreo mínimo** — health check vía cron que alerte si un servicio cae
-- [ ] **SSL en PostgreSQL** — si la DB está en un host separado
-- [ ] **Cerrar puertos de base de datos** — 5432, 3306 solo desde localhost
+## 🟡 Recomendaciones (ver README)
+
+- [🔗] **Rate limiting IP-based** (Fail2ban) → [README](README.md#hardening-para-vps--staging)
+- [🔗] **Usuarios de BD dedicados** → [README](README.md#hardening-para-vps--staging)
+- [🔗] **Cerrar puertos de BD** → [README](README.md#hardening-para-vps--staging)
+
+## ⚪ Aceptado como tradeoff
+
+- [~] **Permisos estrictos** — el proyecto usa `chmod 0777` en staging colaborativo. En producción aplicar `chown root:www-data` + `chmod 755`.
+
+## ⚪ Fuera del scope del proyecto
+
+- **Backup automático** — infraestructura del servidor, no del dashboard
+- **Monitoreo / health check** — responsabilidad del operador del VPS
+- **SSL en PostgreSQL** — no aplica (DB en localhost)

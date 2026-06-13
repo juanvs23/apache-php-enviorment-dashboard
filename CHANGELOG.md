@@ -1,5 +1,53 @@
 # Changelog
 
+## 1.5.0 (2026-06-12)
+
+### Deuda técnica saldada — Fase 6 (12/12)
+
+- **`helpers.php` eliminado** — `get_os()` inlineado en `server-info.php`, `type_badge()` ya existía como método privado en DashboardController, `encriptar()`/`desencriptar()` eran código muerto
+- **Seed.php y fix-admin.php** — documentado que el PDO directo es intencional (circular dependency y emergency tool)
+- **fix-admin.php** — password enmascarado en output (`Admin123` → `********`)
+
+### Testing — ProjectCreator (33 tests nuevos)
+
+- **212 tests totales, 506 assertions** (antes 179/434)
+- **ProjectCreatorTest**: 33 tests — constructor, `createHtml()` vanilla + Vite, `detectProjectType`, 7 templates, GitHub error case, edge cases (chmod 0777, caracteres especiales)
+- Roadmap crear-proyectos: Fase 7 completada ✅
+
+### UX — crear proyectos desde el dashboard
+
+- **Validación client-side onblur**: 3 modales (HTML, Laravel, WordPress) validan al salir del campo y al submit. Errores inline con `is-invalid`.
+- **Auto-slug**: nombre del proyecto → directorio en tiempo real, respeta ediciones manuales
+- **Loading spinner**: botón submit muestra `⟳ Creando...` y se deshabilita (previene double-submit)
+- **Detección de DB existente**: `ProjectCreator::databaseExists()` + endpoint `/?check_db=name` (JSON, solo admin)
+- **Validación de nombre de DB**: formato MySQL (`[a-zA-Z_]\w*`) onblur + async existence check. Server-side bloquea la creación si la DB ya existe (antes solo advertía).
+- **JS extraído**: `assets/js/create-project-ux.js` — reutilizable, ya no inline en `index.php`
+- Roadmap crear-proyectos: Fase 8 completada ✅ (8/8, 100%)
+
+### Auto-save a MySQL
+
+- Proyectos creados desde la UI se registran automáticamente en la tabla `Project` vía `SaveProjectUseCase::create()`
+- Ya no es necesario crearlos manualmente desde Usuarios → Proyectos
+
+### Seguridad y hardening
+
+- **Logging de accesos**: tabla `auth_logs` + `AuthLogger`. Registra login exitoso, fallido y logout con IP, email y timestamp. Vista en `?users=1&tab=logs`.
+- **phpinfo() protegido**: requiere `DEV_MODE=1` en `.env` + autenticación de admin. Sin ambas, denegado.
+- **Hardening en README**: nueva sección con recomendaciones para VPS/staging (HTTPS, firewall, pgAdmin, credenciales, fail2ban, usuarios BD, puertos BD).
+- **Staging checklist reestructurado**: separado en responsabilidad del proyecto vs. responsabilidad del desarrollador.
+- **Vulnerabilidades documentadas**: 2 mitigadas en el proyecto, 5 vía hardening, 3 aceptadas para staging.
+- **`migrations/002-auth-logs.sql`**: migración SQL para instalaciones existentes que no pasaron el auto-migrate.
+
+### Documentación
+
+- **README.md** — actualizado a v1.5.0: hardening, `DEV_MODE`, auth_logs, hardening, puertos BD
+- **`.context.md`** — sincronizado: `DEV_MODE`, auth_logs, JS en `assets/js/`, roadmaps 100%
+- **`docs/context.md`** — deuda técnica 12/12, tests 212/506, logging, phpinfo guard, `AuthLogger`, `auth_logs`
+- **`docs/roadmap-crear-proyectos.md`** — ✅ 8/8 fases (100%)
+- **`docs/staging-checklist.md`** — reestructurado con referencias al README
+- **`docs/vulnerabilidades.md`** — reescrito: 2 mitigadas, 5 externas, 3 aceptadas
+- **`docs/mejoras.md`** — UX crear proyectos ✅, cobertura de tests ✅
+
 ## 1.4.0 (2026-06-11)
 
 ### Crear proyectos desde el dashboard

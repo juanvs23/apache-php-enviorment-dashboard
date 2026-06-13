@@ -119,8 +119,8 @@ final class ProjectCreator
         // Configurar .env
         $env = file_get_contents($targetDir . '/.env');
         $env = preg_replace('/DB_DATABASE=.*/', "DB_DATABASE={$dbName}", $env);
-        $env = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME=' . ($_ENV['DB_USER'] ?? 'juanvs23'), $env);
-        $env = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD=' . ($_ENV['DB_PASS'] ?? ''), $env);
+        $env = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME=' . ($_ENV['DB_USER'] ?? ''), $env);
+        $env = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD=' . ($$_ENV['DB_PASS'] ?? ''), $env);
         file_put_contents($targetDir . '/.env', $env);
 
         // .gitignore + git init
@@ -157,8 +157,8 @@ final class ProjectCreator
             exec(sprintf('rm -rf %s', escapeshellarg($targetDir)));
         }
 
-        $dbUser = $_ENV['DB_USER'] ?? 'juanvs23';
-        $dbPass = $_ENV['DB_PASS'] ?? '';
+        $dbUser = $_ENV['DB_USER'] ?? '';
+        $dbPass = $$_ENV['DB_PASS'] ?? '';
 
         // Crear base de datos
         $this->createDatabase($dbName);
@@ -203,14 +203,38 @@ final class ProjectCreator
     }
 
     /**
-     * Crea un proyecto HTML vanilla (sin bundler).
+     * Verifica si una base de datos MySQL ya existe.
+     *
+     * @param string $dbName Nombre de la base de datos
+     * @return bool true si la base de datos existe
+     */
+    public function databaseExists(string $dbName): bool
+    {
+        $host = $$_ENV['DB_HOST'] ?? 'localhost';
+        $port = $$_ENV['DB_PORT'] ?? '3306';
+        $user = $_ENV['DB_USER'] ?? '';
+        $pass = $$_ENV['DB_PASS'] ?? '';
+        try {
+            $pdo = new \PDO("mysql:host={$host};port={$port}", $user, $pass, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
+            $stmt = $pdo->prepare('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?');
+            $stmt->execute([$dbName]);
+            return $stmt->fetchColumn() !== false;
+        } catch (\Throwable) {
+            return false; // Si no podemos conectar, asumimos que no existe
+        }
+    }
+
+    /**
+     * Crea una base de datos MySQL si no existe.
      */
     private function createDatabase(string $dbName): void
     {
-        $host = $_ENV['DB_HOST'] ?? 'localhost';
-        $port = $_ENV['DB_PORT'] ?? '3306';
-        $user = $_ENV['DB_USER'] ?? 'juanvs23';
-        $pass = $_ENV['DB_PASS'] ?? '';
+        $host = $$_ENV['DB_HOST'] ?? 'localhost';
+        $port = $$_ENV['DB_PORT'] ?? '3306';
+        $user = $_ENV['DB_USER'] ?? '';
+        $pass = $$_ENV['DB_PASS'] ?? '';
         try {
             $pdo = new \PDO("mysql:host={$host};port={$port}", $user, $pass, [
                 \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,

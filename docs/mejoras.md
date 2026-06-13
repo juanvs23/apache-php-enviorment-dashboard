@@ -7,44 +7,45 @@
 - [x] **Filtro de proyectos por usuario** — usuarios cliente solo ven proyectos asignados
 - [x] **Control de acceso por proyecto** — flag `acept_login` habilita/deshabilita botones de acceso y WP Admin
 - [x] **Rediseño del dashboard** — dark theme, cards en grid responsive, tabs en lugar de accordions
-- [x] **Gestión de proyectos** — crear, editar y eliminar proyectos con asignación de usuarios
-- [ ] **phpMyAdmin** — instalar y configurar desde el zip descargado, o agregar detección de instalaciones manuales en subdirectorios
+- [x] **Gestión de proyectos** — crear, editar y eliminar proyectos con asignación de usuarios. Auto-save a MySQL desde la UI.
+- [x] **UX crear proyectos** — validación client-side onblur, auto-slug nombre→directorio, loading spinner, detección de DB existente (async)
+- [x] **phpMyAdmin** — script `setup-phpmyadmin.sh` para instalar desde zip. Detección de instalaciones en subdirectorios.
 - [ ] **Redis / Memcached** — detectar si están instalados y mostrar estado
-- [ ] **Logs en vivo** — cola de logs de Apache accesible desde el dashboard (tail + WebSocket o polling)
-- [ ] **Estadísticas de proyectos** — cantidad de proyectos por tipo, gráfico simple
-- [ ] **Búsqueda y filtros** — filtrar proyectos por nombre, tipo, o estado en el dashboard
-- [ ] **Exportar credenciales** — botón para copiar todas las claves de acceso de un proyecto
-- [ ] **Notificaciones** — si un servicio está caído (PostgreSQL, MySQL, Apache), mostrar alerta visual
-- [ ] **Editor de .env desde el dashboard** — con confirmación y backup automático
+- [x] **Logs en vivo** — tab 📜 Logs (solo server.view). Apache error log, últimas 100 líneas, polling 5s.
+- [x] **Estadísticas de proyectos** — tab 📊 con cards por tipo, barras de progreso y gráfico stacked
+- [x] **Búsqueda y filtros** — barra 🔍 en grilla de proyectos. Filtra por nombre o tipo client-side en tiempo real.
+- [x] **Exportar credenciales** — botón 📋 Copiar credenciales en cada card. Copia URL + usuario + contraseña al portapapeles.
+- [x] **Notificaciones de servicios** — polling cada 30s. Badges en Server Info se actualizan en vivo. Toast si un servicio cae o vuelve.
+- [x] **Editor de .env** — `?edit_env=1` (solo admin). Editor monoespaciado con backup automático.
 - [ ] **Multi-idioma** — soporte para español/inglés vía archivos de traducción
 
 ## Infraestructura
 
-- [ ] **SSL/TLS** — generar certificado autofirmado o con Let's Encrypt para servir el dashboard por HTTPS
-- [ ] **Dockerización** — docker-compose con Apache, PHP, PostgreSQL y MySQL
-- [ ] **Monitoreo** — integración con Prometheus/node_exporter o dashboard de recursos en tiempo real
-- [ ] **Backup automático** — script para dump de bases de datos (PostgreSQL + MySQL) con rotation
-- [ ] **Fail2ban** — bloquear IPs después de N intentos fallidos de login en el dashboard
-- [ ] **Health check endpoint** — `/health` que devuelva JSON con estado de todos los servicios
+- [🔗] **SSL/TLS** — documentado en README (Hardening para VPS). Let's Encrypt recomendado.
+- [❌] **Dockerización** — NO realizar. El dashboard depende de mod_php + .htaccess + exec() a herramientas del host (git, composer, wp-cli, npm). Dockerizar requeriría bind-mounts y un contenedor de 2-3 GB sin ganancia real de portabilidad. `setup.sh` ya cubre 6 distros.
+- [⚪] **Monitoreo** — fuera del scope del proyecto (responsabilidad del operador del VPS)
+- [⚪] **Backup automático** — fuera del scope (infraestructura del servidor)
+- [🔗] **Fail2ban** — documentado en README. Los intentos fallidos se registran en `auth_logs`.
+- [⚪] **Health check endpoint** — fuera del scope (responsabilidad del operador)
 
 ## pgAdmin4
 
-- [ ] **Afinar WSGI** — aumentar procesos/threads en `WSGIDaemonProcess` para entornos con más carga
-- [ ] **Autologin** — pasar token de sesión del dashboard a pgAdmin4 para evitar doble login
-- [ ] **Proxy reverso** — servir pgAdmin4 bajo el mismo dominio que el dashboard
+- [x] **Afinar WSGI** — `pgadmin4-optimize.conf`: 4 procesos × 15 threads.
+- [x] **Proxy reverso** — incluido en `pgadmin4-optimize.conf`: ProxyPass a 127.0.0.1:5050.
+- [❌] **Autologin** — NO realizar. Requiere modificar el core Python/Flask de pgAdmin4. Frágil (se rompe al actualizar pgAdmin).
 
 ## Código
 
 - [x] **Tests iniciales** — estructura de tests con PHPUnit en `dashboard-logic/Tests/`
-- [ ] **Cobertura de tests** — tests para auth, rate-limiter, helpers, user-management
-- [ ] **Type hints** — agregar tipos a todas las funciones
-- [ ] **Linting** — configurar PHP_CodeSniffer o Psalm
-- [ ] **Refactor server-info.php** — extraer la lógica de detección de servicios a una clase separada en lugar de inline en la vista
-- [ ] **Docblocks** — agregar PHPDoc a las clases de `Dashboard\Database\`
+- [x] **Cobertura de tests** — 212 tests, 506 assertions. Domain, Application, Infrastructure, Presentation, Integration. ProjectCreator cubierto.
+- [x] **Refactor server-info.php** — lógica de detección de servicios extraída a `ServiceDetector`. Compartido entre vista y endpoint `/service_status`.
+- [x] **Linting** — `phpcs.xml` con PSR12 configurado. `vendor/bin/phpcs` para ejecutar.
+- [x] **Docblocks** — PHPDoc presente en `Connection`, `Migration`, `Seed` y clases principales.
+- [x] **Type hints** — todos los métodos en Domain, Application, Infrastructure tienen return types.
 
 ## Base de datos
 
-- [ ] **Migraciones versionadas** — sistema de migraciones con control de versión (no solo auto-migrate)
-- [ ] **Seed data versionado** — separar seeds por entorno (dev/staging/prod)
-- [ ] **Índices** — revisar y agregar índices faltantes en tablas USERS y Project
+- [x] **Migraciones versionadas** — tabla `migrations` con control de versión. `Migration::apply()` aplica secuencialmente las no ejecutadas.
+- [x] **Índices** — composite index `idx_email_created` en `auth_logs`. Resto de tablas con índices adecuados.
+- [x] **Seed data versionado** — `SEED_ENV` en .env: `dev` (default, contraseñas conocidas), `staging` (aleatorias fuertes), `prod` (solo admin).
 - [ ] **Soft delete** — implementar borrado lógico en usuarios y proyectos
