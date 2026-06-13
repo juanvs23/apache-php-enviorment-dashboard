@@ -120,7 +120,7 @@ final class ProjectCreator
         $env = file_get_contents($targetDir . '/.env');
         $env = preg_replace('/DB_DATABASE=.*/', "DB_DATABASE={$dbName}", $env);
         $env = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME=' . ($_ENV['DB_USER'] ?? ''), $env);
-        $env = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD=' . ($$_ENV['DB_PASS'] ?? ''), $env);
+        $env = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD=' . ($_ENV['DB_PASS'] ?? ''), $env);
         file_put_contents($targetDir . '/.env', $env);
 
         // .gitignore + git init
@@ -158,7 +158,7 @@ final class ProjectCreator
         }
 
         $dbUser = $_ENV['DB_USER'] ?? '';
-        $dbPass = $$_ENV['DB_PASS'] ?? '';
+        $dbPass = $_ENV['DB_PASS'] ?? '';
 
         // Crear base de datos
         $this->createDatabase($dbName);
@@ -210,10 +210,10 @@ final class ProjectCreator
      */
     public function databaseExists(string $dbName): bool
     {
-        $host = $$_ENV['DB_HOST'] ?? 'localhost';
-        $port = $$_ENV['DB_PORT'] ?? '3306';
+        $host = $_ENV['DB_HOST'] ?? 'localhost';
+        $port = $_ENV['DB_PORT'] ?? '3306';
         $user = $_ENV['DB_USER'] ?? '';
-        $pass = $$_ENV['DB_PASS'] ?? '';
+        $pass = $_ENV['DB_PASS'] ?? '';
         try {
             $pdo = new \PDO("mysql:host={$host};port={$port}", $user, $pass, [
                 \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
@@ -231,10 +231,10 @@ final class ProjectCreator
      */
     private function createDatabase(string $dbName): void
     {
-        $host = $$_ENV['DB_HOST'] ?? 'localhost';
-        $port = $$_ENV['DB_PORT'] ?? '3306';
+        $host = $_ENV['DB_HOST'] ?? 'localhost';
+        $port = $_ENV['DB_PORT'] ?? '3306';
         $user = $_ENV['DB_USER'] ?? '';
-        $pass = $$_ENV['DB_PASS'] ?? '';
+        $pass = $_ENV['DB_PASS'] ?? '';
         try {
             $pdo = new \PDO("mysql:host={$host};port={$port}", $user, $pass, [
                 \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
