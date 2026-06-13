@@ -247,6 +247,146 @@ if (isset($_GET['delete_project']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: /?flash={$t}&msg=" . urlencode($m));
     exit;
 }
+// ─── AJAX: estado de servicios (solo server.view) ───────────────────────────
+if (isset($_GET['service_status'])) {
+    header('Content-Type: application/json');
+    if (!$authenticated || !$authContext->can('server.view', $authUser)) {
+        echo json_encode(['error' => 'Unauthorized']);
+        exit;
+    }
+    $detector = ServiceContainer::get(\Dashboard\Infrastructure\System\ServiceDetector::class);
+    echo json_encode($detector->all());
+    exit;
+}
+// ─── AJAX: Apache error log tail (solo admin) ──────────────────────────────
+if (isset($_GET['tail_log'])) {
+    header('Content-Type: application/json');
+    if (!$authenticated || !$isAdmin) {
+        echo json_encode(['error' => 'Unauthorized']);
+        exit;
+    }
+
+    // 1. Ruta personalizada desde .env (máxima prioridad)
+    $envLog = $_ENV['APACHE_ERROR_LOG'] ?? '';
+    if ($envLog !== '' && file_exists($envLog) && is_readable($envLog)) {
+        $logFile = $envLog;
+    }
+
+    // 2. Auto-detección si no hay ruta personalizada
+    if (!$logFile) {
+        $candidates = [
+            '/var/log/apache2/error.log',     // Debian/Ubuntu
+            '/var/log/httpd/error_log',       // RHEL/Fedora/CentOS
+            '/var/log/apache2/error_log',     // Alternativo
+            '/var/log/httpd/error.log',       // Alternativo
+        ];
+
+        // Detectar HTTPD_ROOT desde apache2ctl/httpd -V
+        $httpdBin = null;
+        foreach (['apache2ctl', 'httpd'] as $bin) {
+            $path = trim(shell_exec("command -v $bin 2>/dev/null") ?? '');
+            if ($path) { $httpdBin = $bin; break; }
+        }
+        if ($httpdBin) {
+            $version = shell_exec("$httpdBin -V 2>/dev/null") ?? '';
+            if (preg_match('/HTTPD_ROOT="(.+?)"/', $version, $m)) {
+                $candidates[] = $m[1] . '/logs/error_log';
+                $candidates[] = $m[1] . '/logs/error.log';
+            }
+            if (preg_match('/DEFAULT_ERRORLOG="(.+?)"/', $version, $m)) {
+                $candidates[] = $m[1];
+            }
+        }
+
+        // Parsear configuración de Apache
+        $confCandidates = [
+            '/etc/apache2/apache2.conf',
+            '/etc/httpd/conf/httpd.conf',
+            '/etc/apache2/httpd.conf',
+        ];
+        foreach ($confCandidates as $conf) {
+            if (file_exists($conf) && is_readable($conf)) {
+                $content = file_get_contents($conf);
+                if (preg_match('/^\s*ErrorLog\s+(.+)$/m', $content, $m)) {
+                    $candidates[] = trim($m[1]);
+                }
+            }
+        }
+
+        // Escanear VirtualHosts
+        $vhostDirs = ['/etc/apache2/sites-enabled', '/etc/httpd/conf.d'];
+        foreach ($vhostDirs as $dir) {
+            if (!is_dir($dir) || !is_readable($dir)) continue;
+            foreach (glob("$dir/*.conf") as $vhost) {
+                if (!is_readable($vhost)) continue;
+                $content = file_get_contents($vhost);
+                if (preg_match('/^\s*ErrorLog\s+(.+)$/m', $content, $m)) {
+                    $candidates[] = trim($m[1]);
+                }
+            }
+        }
+
+        foreach ($candidates as $c) {
+            if (file_exists($c) && is_readable($c)) {
+                $logFile = $c;
+                break;
+            }
+        }
+    }
+
+    if (!$logFile) {
+        $tried = $envLog ?: implode(', ', array_slice($candidates ?? [], 0, 4));
+        echo json_encode([
+            'lines' => [
+                '⚠️ No se encontró un archivo de log de Apache legible.',
+                'Ruta buscada: ' . $tried,
+                '',
+                'Soluciones:',
+                '  1. Definí APACHE_ERROR_LOG en .env con la ruta correcta',
+                '  2. O asegurate de que www-data pueda leer el archivo:',
+                '     sudo usermod -aG adm www-data',
+                '     sudo systemctl restart apache2',
+            ],
+        ]);
+        exit;
+    }
+
+    $lines = 100;
+    $content = [];
+    $cmd = sprintf('tail -n %d %s 2>&1', $lines, escapeshellarg($logFile));
+    exec($cmd, $content);
+    $content = array_map(function ($l) {
+        return mb_convert_encoding($l, 'UTF-8', 'UTF-8');
+    }, $content);
+
+    echo json_encode(['lines' => $content, 'file' => $logFile]);
+    exit;
+}
+// ─── Editor de .env (solo admin autenticado) ─────────────────────────────────
+if (isset($_GET['edit_env'])) {
+    if (!$authenticated || !$isAdmin) {
+        header('Location: /');
+        exit;
+    }
+    $envPath = __DIR__ . '/.env';
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $content = $_POST['env_content'] ?? '';
+        // Backup antes de sobrescribir
+        $backup = $envPath . '.bak.' . date('Ymd-His');
+        if (file_exists($envPath)) {
+            copy($envPath, $backup);
+        }
+        file_put_contents($envPath, $content);
+        $msg = urlencode('✅ .env guardado. Backup: ' . basename($backup));
+        header("Location: /?edit_env=1&flash=success&msg={$msg}");
+        exit;
+    }
+
+    $envContent = file_exists($envPath) ? file_get_contents($envPath) : '# .env no encontrado';
+    require __DIR__ . '/dashboard-logic/views/env-editor.php';
+    exit;
+}
 // ─── AJAX: check if database exists (solo admin autenticado) ────────────────
 if (isset($_GET['check_db']) && $_GET['check_db'] !== '') {
     header('Content-Type: application/json');

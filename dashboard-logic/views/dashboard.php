@@ -74,21 +74,41 @@ $newProjectTypes = [
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabServer" type="button">🖥️ Servidor</button>
         </li>
         <?php endif; ?>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabStats" type="button">📊 Estadísticas</button>
+        </li>
+        <?php if ($canViewServer): ?>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLogs" type="button">📜 Logs</button>
+        </li>
+        <?php endif; ?>
     </ul>
 
     <div class="tab-content">
 
         <!-- ─── Proyectos ─────────────────────────────────────────── -->
         <div class="tab-pane fade show active" id="tabProyectos">
-            <h5 class="text-light mb-3 d-flex align-items-center gap-2">
-                <span>📁</span> Mis Proyectos
-            </h5>
-            <div class="row g-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-light mb-0 d-flex align-items-center gap-2">
+                    <span>📁</span> Mis Proyectos
+                </h5>
+                <span class="text-muted small" id="projectCount"><?= count($projects) ?> proyecto(s)</span>
+            </div>
+            <?php if ($has_projects): ?>
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark text-light border-secondary">🔍</span>
+                    <input type="text" id="projectSearch" class="form-control bg-dark text-light border-secondary"
+                           placeholder="Filtrar por nombre o tipo...">
+                </div>
+            </div>
+            <?php endif; ?>
+            <div class="row g-3" id="projectGrid">
                 <?php foreach ($projects as $project): ?>
                     <?php require __DIR__ . '/components/project-card.php'; ?>
                 <?php endforeach; ?>
                 <?php if (!$has_projects): ?>
-                    <div class="col-12 text-center text-white-50 py-5">
+                    <div class="col-12 text-center text-white-50 py-5" id="noProjectsMsg">
                         <p class="fs-4 mb-1">📂 No hay proyectos</p>
                         <p class="small">Ningún directorio contiene <code>user-data.txt</code></p>
                     </div>
@@ -116,8 +136,116 @@ $newProjectTypes = [
         </div>
         <?php endif; ?>
 
+        <!-- ─── Estadísticas ──────────────────────────────────────── -->
+        <div class="tab-pane fade" id="tabStats">
+            <?php
+            // Contar proyectos por tipo
+            $stats = ['wordpress' => 0, 'laravel' => 0, 'html' => 0, 'node' => 0, 'otro' => 0];
+            $total = count($projects);
+            foreach ($projects as $p) {
+                $t = strtolower($p['type'] ?? '');
+                if ($t === 'wordpress')      $stats['wordpress']++;
+                elseif ($t === 'laravel')    $stats['laravel']++;
+                elseif ($t === 'html' || $t === 'static') $stats['html']++;
+                elseif ($t === 'node' || $t === 'vite')   $stats['node']++;
+                else                         $stats['otro']++;
+            }
+
+            $colors = [
+                'wordpress' => ['#21759B', 'primary'],
+                'laravel'   => ['#FF2D20', 'danger'],
+                'html'      => ['#E44D26', 'warning'],
+                'node'      => ['#539E43', 'success'],
+                'otro'      => ['#6e7681', 'secondary'],
+            ];
+            ?>
+            <div class="row g-3">
+                <?php foreach ($stats as $type => $count): ?>
+                <?php if ($count > 0 || $total === 0): ?>
+                <?php $pct = $total > 0 ? round($count / $total * 100, 1) : 0; ?>
+                <div class="col-12 col-md-6 col-lg-3 mb-2">
+                    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px;">
+                        <div class="card-body text-center p-3">
+                            <div class="fs-2 fw-bold mb-1" style="color: <?= $colors[$type][0] ?>;">
+                                <?= $count ?>
+                            </div>
+                            <div class="text-light small text-capitalize mb-2"><?= $type ?></div>
+                            <div class="progress" style="height: 6px; background: #1a1d23;">
+                                <div class="progress-bar bg-<?= $colors[$type][1] ?>"
+                                     style="width: <?= $pct ?>%; border-radius: 3px;"></div>
+                            </div>
+                            <div style="color: #8b949e;" class="small mt-1"><?= $pct ?>%</div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+
+            <?php if ($total > 0): ?>
+            <div class="card border-0 shadow-sm mt-3" style="background: #2d323e; border-radius: 12px;">
+                <div class="card-body p-3">
+                    <h6 class="text-light mb-3">Distribución</h6>
+                    <div class="progress-stacked" style="height: 24px; border-radius: 6px; overflow: hidden;">
+                        <?php foreach ($stats as $type => $count): ?>
+                        <?php if ($count > 0): ?>
+                        <div class="progress-bar bg-<?= $colors[$type][1] ?>"
+                             role="progressbar"
+                             style="width: <?= $total > 0 ? round($count / $total * 100, 1) : 0 ?>%"
+                             title="<?= ucfirst($type) ?>: <?= $count ?>">
+                            <?= $count > 0 ? $count : '' ?>
+                        </div>
+                        <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3 mt-2">
+                        <?php foreach ($stats as $type => $count): ?>
+                        <?php if ($count > 0): ?>
+                        <small style="color: #8b949e;">
+                            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:<?= $colors[$type][0] ?>;"></span>
+                            <?= ucfirst($type) ?>: <?= $count ?>
+                        </small>
+                        <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <?php if ($total === 0): ?>
+                <div class="text-center text-white-50 py-5">
+                    <p class="fs-4 mb-1">📊 Sin proyectos</p>
+                    <p class="small">Creá proyectos para ver estadísticas.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- ─── Logs en vivo (solo server.view) ────────────────────── -->
+        <?php if ($canViewServer): ?>
+        <div class="tab-pane fade" id="tabLogs">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-light mb-0 d-flex align-items-center gap-2">
+                    <span>📜</span> Apache Error Log
+                </h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <span id="logStatus" class="small" style="color: #8b949e;">Conectando...</span>
+                    <button type="button" id="logRefreshBtn" class="btn btn-sm btn-outline-secondary">🔄 Actualizar</button>
+                </div>
+            </div>
+            <div class="card border-0 shadow-sm" style="background: #0d1117; border-radius: 8px;">
+                <div class="card-body p-0">
+                    <pre id="logContent" style="color: #c9d1d9; font-family: 'Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace; font-size: 0.78rem; line-height: 1.5; padding: 1rem; margin: 0; max-height: 70vh; overflow-y: auto; white-space: pre-wrap; word-break: break-all;">Cargando...</pre>
+                </div>
+            </div>
+            <small class="text-secondary mt-2 d-block">Últimas 100 líneas del error log de Apache — se actualiza cada 5 segundos. Solo admin.</small>
+        </div>
+        <?php endif; ?>
+
     </div>
 </section>
+
+<!-- Toast container para notificaciones de servicios -->
+<div id="serviceToasts" style="position: fixed; bottom: 1rem; right: 1rem; z-index: 9999; min-width: 300px;"></div>
 
 <?php require __DIR__ . '/components/modal-create-html.php'; ?>
 <?php require __DIR__ . '/components/modal-create-laravel.php'; ?>

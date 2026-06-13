@@ -34,6 +34,7 @@ use Dashboard\Infrastructure\Persistence\MySQLPermissionRepository;
 use Dashboard\Infrastructure\Persistence\MySQLProjectRepository;
 use Dashboard\Infrastructure\Persistence\MySQLUserRepository;
 use Dashboard\Infrastructure\Session\SessionManager;
+use Dashboard\Infrastructure\System\ServiceDetector;
 
 /**
  * Contenedor de servicios simple (Service Container).
@@ -187,6 +188,7 @@ final class ServiceContainer
 
             // ─── Cross-cutting ──────────────────────────────────────
             AuthLogger::class => fn() => new AuthLogger(),
+            ServiceDetector::class => fn() => new ServiceDetector(),
         ];
     }
 }

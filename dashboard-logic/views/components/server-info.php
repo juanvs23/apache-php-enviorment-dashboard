@@ -94,14 +94,19 @@
             </div>
             <div class="small" style="color: #8b949e;">
                 <?php
-                $free  = disk_free_space('/');
-                $total = disk_total_space('/');
+                $diskPath = $_SERVER['DOCUMENT_ROOT'] ?? __DIR__;
+                $free  = disk_free_space($diskPath);
+                $total = disk_total_space($diskPath);
                 $used  = $total - $free;
                 $pct   = $total > 0 ? round($used / $total * 100, 1) : 0;
-                ?>
-                <div class="progress mb-2" style="height: 8px; background: #1a1d23;">
+                $diskLabel = $total > 0 ? round($total / 1024 / 1024 / 1024) . ' GB' : 'N/A';
+                ?><div class="progress mb-2" style="height: 8px; background: #1a1d23;">
                     <div class="progress-bar bg-<?= $pct > 80 ? 'danger' : ($pct > 60 ? 'warning' : 'success') ?>"
                          style="width: <?= $pct ?>%; border-radius: 4px;"></div>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Total</span>
+                    <code style="color: #58a6ff;"><?= $diskLabel ?></code>
                 </div>
                 <div class="d-flex justify-content-between py-1">
                     <span>Usado</span>
@@ -110,10 +115,6 @@
                 <div class="d-flex justify-content-between py-1">
                     <span>Libre</span>
                     <code style="color: #58a6ff;"><?= round($free / 1024 / 1024 / 1024, 1) ?> GB</code>
-                </div>
-                <div class="d-flex justify-content-between py-1">
-                    <span>Total</span>
-                    <code style="color: #58a6ff;"><?= round($total / 1024 / 1024 / 1024, 1) ?> GB</code>
                 </div>
             </div>
         </div>
@@ -141,40 +142,14 @@
             </div>
 
             <?php
-            // ── Detección de servicios ────────────────────────────────
-            $pgadmin_url  = '/pgadmin4/';
-            $pgadmin_ok   = false;
-            $pgadmin_conf = file_exists('/etc/apache2/conf-enabled/pgadmin4.conf')
-                         || file_exists('/etc/apache2/conf-available/pgadmin4.conf');
-            if ($pgadmin_conf) {
-                $ctx = stream_context_create(['http' => ['timeout' => 2, 'method' => 'HEAD']]);
-                $headers = @get_headers('http://localhost' . $pgadmin_url, 1, $ctx);
-                $pgadmin_ok = $headers && isset($headers[0]) && str_contains($headers[0], '302');
-            }
-
-            exec('pg_isready -q 2>/dev/null', $_, $exit_pg);
-            $pg_alive = $exit_pg === 0;
-
-            $pma_url  = '/phpmyadmin/';
-            $pma_ok   = false;
-            $_pma_env = $_ENV['PMA_URL'] ?? '';
-            if ($_pma_env !== '') {
-                $pma_url = $_pma_env;
-                $pma_ok  = true;
-            } else {
-                $_pma_conf = file_exists('/etc/phpmyadmin/apache.conf')
-                          || file_exists('/etc/apache2/conf-enabled/phpmyadmin.conf')
-                          || file_exists('/etc/apache2/conf-available/phpmyadmin.conf');
-                if ($_pma_conf) {
-                    $ctx = stream_context_create(['http' => ['timeout' => 2, 'method' => 'HEAD']]);
-                    $headers = @get_headers('http://localhost' . $pma_url, 1, $ctx);
-                    $pma_ok = $headers && isset($headers[0])
-                           && (str_contains($headers[0], '200') || str_contains($headers[0], '302'));
-                }
-            }
-
-            exec('pgrep mysqld 2>/dev/null', $_, $exit_mysql);
-            $mysql_alive = $exit_mysql === 0;
+            // ── Detección de servicios vía ServiceDetector ────────────
+            $detector = \Dashboard\Presentation\ServiceContainer::get(\Dashboard\Infrastructure\System\ServiceDetector::class);
+            $pg_alive   = $detector->isPostgreSQLAlive();
+            $mysql_alive = $detector->isMySQLAlive();
+            $pgadmin_ok  = $detector->isPgAdmin4Available();
+            $pma_ok      = $detector->isPhpMyAdminAvailable();
+            $pgadmin_url = '/pgadmin4/';
+            $pma_url     = $_ENV['PMA_URL'] ?: '/phpmyadmin/';
 
             // ── Claves desde .env ────────────────────────────────────
             $_usr_pg  = $_ENV['DB_USER'] ?? null;
@@ -195,12 +170,20 @@
             <!-- ── Estado de servicios ── -->
             <div class="d-flex flex-wrap gap-1 mb-2">
                 <span class="badge bg-<?= $pg_alive ? 'success' : 'secondary' ?> bg-opacity-25"
-                      style="color: <?= $pg_alive ? '#3fb950' : '#8b949e' ?>;">
+                      style="color: <?= $pg_alive ? '#3fb950' : '#8b949e' ?>;" data-service="postgresql">
                     PostgreSQL
                 </span>
                 <span class="badge bg-<?= $mysql_alive ? 'success' : 'secondary' ?> bg-opacity-25"
-                      style="color: <?= $mysql_alive ? '#3fb950' : '#8b949e' ?>;">
+                      style="color: <?= $mysql_alive ? '#3fb950' : '#8b949e' ?>;" data-service="mysql">
                     MySQL
+                </span>
+                <span class="badge bg-<?= $pgadmin_ok ? 'success' : 'secondary' ?> bg-opacity-25"
+                      style="color: <?= $pgadmin_ok ? '#3fb950' : '#8b949e' ?>;" data-service="pgadmin4">
+                    pgAdmin4
+                </span>
+                <span class="badge bg-<?= $pma_ok ? 'success' : 'secondary' ?> bg-opacity-25"
+                      style="color: <?= $pma_ok ? '#3fb950' : '#8b949e' ?>;" data-service="phpmyadmin">
+                    phpMyAdmin
                 </span>
             </div>
 

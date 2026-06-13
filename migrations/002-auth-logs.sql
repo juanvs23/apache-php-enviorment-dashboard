@@ -17,5 +17,6 @@ CREATE TABLE IF NOT EXISTS auth_logs (
     created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_email (email),
     KEY idx_action (action),
-    KEY idx_created (created_at)
+    KEY idx_created (created_at),
+    KEY idx_email_created (email, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

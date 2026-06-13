@@ -4,6 +4,8 @@
  * Se aplica automáticamente a los 3 modales de creación (HTML, Laravel, WordPress).
  * Reutilizable: solo requiere que el form tenga action con "create_project"
  * y los campos sigan la convención de nombres (project_name, directory, db_name, etc.).
+ *
+ * También incluye el botón "Copiar credenciales" en las tarjetas de proyecto.
  */
 (function () {
     'use strict';
@@ -229,4 +231,207 @@
         var fb = el.parentNode.querySelector('.invalid-feedback');
         if (fb) fb.remove();
     }
+
+    // ── Copy credentials buttons ──────────────────────────────
+    document.querySelectorAll('.copy-creds-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var url   = btn.getAttribute('data-cred-url')   || '';
+            var user  = btn.getAttribute('data-cred-user')  || '';
+            var pass  = btn.getAttribute('data-cred-pass')  || '';
+            var name  = btn.getAttribute('data-cred-name')  || '';
+
+            var lines = [];
+            lines.push('Proyecto: ' + name);
+            lines.push('URL: ' + window.location.origin + '/' + url);
+            if (user) lines.push('Usuario: ' + user);
+            if (pass) lines.push('Contraseña: ' + pass);
+
+            var text = lines.join('\n');
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () {
+                    flashButton(btn);
+                });
+            } else {
+                // Fallback for older browsers or non-HTTPS
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                flashButton(btn);
+            }
+        });
+    });
+
+    function flashButton(btn) {
+        var original = btn.textContent;
+        btn.textContent = '✅ Copiado!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-secondary');
+        setTimeout(function () {
+            btn.textContent = original;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 1500);
+    }
+
+    // ── Project search / filter ───────────────────────────────
+    var searchInput = document.getElementById('projectSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            var query = searchInput.value.toLowerCase().trim();
+            var cards = document.querySelectorAll('#projectGrid .col-12');
+            var visible = 0;
+
+            cards.forEach(function (card) {
+                var text = card.textContent.toLowerCase();
+                if (!query || text.indexOf(query) !== -1) {
+                    card.style.display = '';
+                    visible++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            var countEl = document.getElementById('projectCount');
+            if (countEl) {
+                countEl.textContent = visible + ' proyecto(s)';
+            }
+
+            var noMsg = document.getElementById('noFilterResults');
+            if (visible === 0 && query) {
+                if (!noMsg) {
+                    noMsg = document.createElement('div');
+                    noMsg.id = 'noFilterResults';
+                    noMsg.className = 'col-12 text-center text-white-50 py-5';
+                    noMsg.innerHTML = '<p class="fs-4 mb-1">🔍 Sin resultados</p><p class="small">Ningún proyecto coincide con <code>' + query + '</code></p>';
+                    document.getElementById('projectGrid').appendChild(noMsg);
+                }
+            } else if (noMsg) {
+                noMsg.remove();
+            }
+        });
+    }
+
+    // ── Live Apache error log (tabLogs) ──────────────────────
+    var logContent = document.getElementById('logContent');
+    var logStatus = document.getElementById('logStatus');
+    var logRefresh = document.getElementById('logRefreshBtn');
+    if (logContent) {
+        var logTimer = null;
+
+        function fetchLogs() {
+            if (logStatus) logStatus.textContent = 'Cargando...';
+            fetch('/?tail_log=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.lines) {
+                        logContent.textContent = data.lines.join('\n');
+                        if (logStatus) {
+                            logStatus.textContent = '✓ ' + (data.file || 'logs');
+                            logStatus.style.color = '#3fb950';
+                        }
+                        logContent.scrollTop = logContent.scrollHeight;
+                    } else {
+                        logContent.textContent = data.error || 'Error al cargar logs';
+                        if (logStatus) logStatus.textContent = 'Error';
+                        if (logStatus) logStatus.style.color = '#f85149';
+                    }
+                })
+                .catch(function () {
+                    logContent.textContent = 'Error de conexión al cargar logs';
+                    if (logStatus) logStatus.textContent = 'Sin conexión';
+                    if (logStatus) logStatus.style.color = '#f85149';
+                });
+        }
+
+        function startPolling() {
+            fetchLogs();
+            logTimer = setInterval(fetchLogs, 5000);
+        }
+
+        function stopPolling() {
+            if (logTimer) clearInterval(logTimer);
+        }
+
+        if (logRefresh) {
+            logRefresh.addEventListener('click', fetchLogs);
+        }
+
+        var logsTab = document.querySelector('[data-bs-target="#tabLogs"]');
+        if (logsTab) {
+            logsTab.addEventListener('shown.bs.tab', startPolling);
+            logsTab.addEventListener('hidden.bs.tab', stopPolling);
+        }
+
+        if (document.getElementById('tabLogs').classList.contains('active')) {
+            startPolling();
+        }
+    }
+
+    // ── Service status polling + notifications ──────────────
+    var prevState = {};
+    var serviceTimer = null;
+
+    function checkServices() {
+        fetch('/?service_status=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.error) return;
+
+                var nameMap = {
+                    postgresql: 'PostgreSQL',
+                    mysql: 'MySQL',
+                    pgadmin4: 'pgAdmin4',
+                    phpmyadmin: 'phpMyAdmin',
+                    apache: 'Apache'
+                };
+
+                Object.keys(data).forEach(function (key) {
+                    var isUp = data[key];
+                    var prev = prevState[key];
+
+                    // Update badge in Server tab if present
+                    var badge = document.querySelector('[data-service="' + key + '"]');
+                    if (badge) {
+                        badge.className = 'badge bg-' + (isUp ? 'success' : 'secondary') + ' bg-opacity-25';
+                        badge.style.color = isUp ? '#3fb950' : '#8b949e';
+                    }
+
+                    // Show toast on state change (only DOWN transitions)
+                    if (prev === true && isUp === false) {
+                        showToast('⚠️ ' + (nameMap[key] || key) + ' dejó de responder', 'danger');
+                    } else if (prev === false && isUp === true && prevState.hasOwnProperty(key)) {
+                        showToast('✅ ' + (nameMap[key] || key) + ' volvió', 'success');
+                    }
+
+                    prevState[key] = isUp;
+                });
+            });
+    }
+
+    function showToast(message, type) {
+        var container = document.getElementById('serviceToasts');
+        if (!container) return;
+
+        var toast = document.createElement('div');
+        toast.className = 'alert alert-' + type + ' alert-dismissible fade show py-2 px-3 small mb-2';
+        toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+        toast.innerHTML = message +
+            '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" style="font-size:0.6rem;"></button>';
+        container.appendChild(toast);
+
+        setTimeout(function () {
+            toast.classList.remove('show');
+            setTimeout(function () { toast.remove(); }, 300);
+        }, 8000);
+    }
+
+    // Start polling immediately, every 30 seconds
+    checkServices();
+    serviceTimer = setInterval(checkServices, 30000);
 })();

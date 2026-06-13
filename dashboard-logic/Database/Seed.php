@@ -12,6 +12,11 @@ use PDO;
  * Creates default levels, permissions, and users.
  * Safe to run multiple times (uses INSERT IGNORE).
  *
+ * Entornos soportados vía SEED_ENV en .env:
+ *   - dev (default):   contraseñas conocidas para desarrollo local
+ *   - staging:         contraseñas aleatorias fuertes para VPS compartido
+ *   - prod:            solo admin, sin usuarios de prueba
+ *
  * ⚠️ ARCHITECTURE NOTE: This class uses PDO directly instead of Use Cases.
  * This is INTENTIONAL — Seed runs during Connection::get() auto-migration,
  * BEFORE the ServiceContainer and Use Cases are wired up. At this point
@@ -20,8 +25,15 @@ use PDO;
  */
 final class Seed
 {
-    public static function run(PDO $pdo): void
+    /**
+     * @param PDO    $pdo  Conexión a la base de datos
+     * @param string $env  Entorno: 'dev' | 'staging' | 'prod'
+     */
+    public static function run(PDO $pdo, string $env = ''): void
     {
+        $env = $env ?: ($_ENV['SEED_ENV'] ?? 'dev');
+
+        // ── Levels (común a todos los entornos) ──────────────────────
         // ── Levels ─────────────────────────────────────────────────────
         $pdo->exec("
             INSERT IGNORE INTO levels (levelsID, level_name, level_type)
@@ -103,46 +115,65 @@ final class Seed
             }
         }
 
-        // ── User: admin@admin / Admin123 ───────────────────────────────
-        $email = 'admin@admin.com';
-        $pass  = password_hash('Admin123', PASSWORD_BCRYPT);
+        // ── Users — según entorno ────────────────────────────────────
+        $adminPass = ($env === 'staging')
+            ? bin2hex(random_bytes(8))   // Aleatorio fuerte
+            : 'Admin123';                 // Desarrollo local
 
+        $adminHash = password_hash($adminPass, PASSWORD_BCRYPT);
         $pdo->prepare("
             INSERT IGNORE INTO USERS (userID, email, name, pass, level)
             VALUES (UUID(), :email, 'Admin', :pass, :level)
         ")->execute([
-            ':email' => $email,
-            ':pass'  => $pass,
+            ':email' => 'admin@admin.com',
+            ':pass'  => $adminHash,
             ':level' => $adminLevel,
         ]);
 
-        // ── User: operator@test.com / Operator123 ──────────────────────
+        if ($env === 'prod') {
+            echo "Seed complete (prod):\n";
+            echo "  - Levels: admin, client\n";
+            echo "  - 8 permissions seeded\n";
+            echo "  - Users: admin@admin.com (no test users)\n";
+            return;
+        }
+
+        // ── Test users (solo dev y staging) ──────────────────────────
+        $opPass  = ($env === 'staging') ? bin2hex(random_bytes(8)) : 'Operator123';
+        $revPass = ($env === 'staging') ? bin2hex(random_bytes(8)) : 'Revisor123';
+
         if ($operatorLevel) {
             $pdo->prepare("
                 INSERT IGNORE INTO USERS (userID, email, name, pass, level)
                 VALUES (UUID(), :email, 'Operator', :pass, :level)
             ")->execute([
                 ':email' => 'operator@test.com',
-                ':pass'  => password_hash('Operator123', PASSWORD_BCRYPT),
+                ':pass'  => password_hash($opPass, PASSWORD_BCRYPT),
                 ':level' => $operatorLevel,
             ]);
         }
 
-        // ── User: revisor@test.com / Revisor123 ────────────────────────
         if ($revisorLevel) {
             $pdo->prepare("
                 INSERT IGNORE INTO USERS (userID, email, name, pass, level)
                 VALUES (UUID(), :email, 'Revisor', :pass, :level)
             ")->execute([
                 ':email' => 'revisor@test.com',
-                ':pass'  => password_hash('Revisor123', PASSWORD_BCRYPT),
+                ':pass'  => password_hash($revPass, PASSWORD_BCRYPT),
                 ':level' => $revisorLevel,
             ]);
         }
 
-        echo "Seed complete:\n";
+        echo "Seed complete ({$env}):\n";
         echo "  - Levels: admin, client, operator, revisor\n";
         echo "  - 8 permissions seeded\n";
-        echo "  - Users: admin@admin.com, operator@test.com, revisor@test.com\n";
+        if ($env === 'staging') {
+            echo "  - admin@admin.com / {$adminPass}\n";
+            echo "  - operator@test.com / {$opPass}\n";
+            echo "  - revisor@test.com / {$revPass}\n";
+            echo "  ⚠️  Guardá estas contraseñas. No se volverán a mostrar.\n";
+        } else {
+            echo "  - Users: admin@admin.com, operator@test.com, revisor@test.com\n";
+        }
     }
 }

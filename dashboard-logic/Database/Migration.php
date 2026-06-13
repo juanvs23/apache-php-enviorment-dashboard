@@ -7,10 +7,14 @@ namespace Dashboard\Database;
 use PDO;
 
 /**
- * Maneja el esquema inicial de la base de datos.
+ * Maneja el esquema de la base de datos con migraciones versionadas.
  *
- * Responsabilidad única: aplicar el schema DDL si las tablas no existen.
- * Se ejecuta automáticamente al conectar por primera vez.
+ * Cada migración se registra en la tabla `migrations`. Si una migración
+ * ya fue aplicada, se saltea. Esto permite agregar nuevas tablas y columnas
+ * de forma incremental sin depender solo de IF NOT EXISTS.
+ *
+ * Las migraciones se numeran secuencialmente (001, 002, ...) y corresponden
+ * a los archivos SQL en el directorio `migrations/`.
  */
 final class Migration
 {
@@ -19,6 +23,37 @@ final class Migration
      * Es seguro ejecutarlo múltiples veces (usa IF NOT EXISTS).
      */
     public static function apply(PDO $pdo): void
+    {
+        // ── Tabla de control de migraciones ──────────────────────────
+        $pdo->exec('
+            CREATE TABLE IF NOT EXISTS migrations (
+                version     VARCHAR(10)  NOT NULL,
+                applied_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (version)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ');
+
+        // ── Aplicar migraciones secuencialmente ─────────────────────
+        $migrations = [
+            '001' => 'applyV001',
+            '002' => 'applyV002',
+        ];
+
+        $applied = $pdo->query("SELECT version FROM migrations")->fetchAll(PDO::FETCH_COLUMN);
+
+        foreach ($migrations as $version => $method) {
+            if (in_array($version, $applied, true)) {
+                continue; // Ya aplicada
+            }
+            self::$method($pdo);
+            $pdo->prepare('INSERT INTO migrations (version) VALUES (?)')->execute([$version]);
+        }
+    }
+
+    /**
+     * Migración 001 — Schema inicial.
+     */
+    private static function applyV001(PDO $pdo): void
     {
         $pdo->exec('
             CREATE TABLE IF NOT EXISTS levels (
@@ -75,7 +110,13 @@ final class Migration
                 CONSTRAINT fk_lp_perm  FOREIGN KEY (perm_id) REFERENCES permissions (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ');
+    }
 
+    /**
+     * Migración 002 — Logs de autenticación.
+     */
+    private static function applyV002(PDO $pdo): void
+    {
         $pdo->exec('
             CREATE TABLE IF NOT EXISTS auth_logs (
                 id         INT AUTO_INCREMENT PRIMARY KEY,
@@ -86,7 +127,8 @@ final class Migration
                 created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 KEY idx_email (email),
                 KEY idx_action (action),
-                KEY idx_created (created_at)
+                KEY idx_created (created_at),
+                KEY idx_email_created (email, created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ');
     }
