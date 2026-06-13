@@ -22,7 +22,7 @@
 ## Infraestructura
 
 - [🔗] **SSL/TLS** — documentado en README (Hardening para VPS). Let's Encrypt recomendado.
-- [ ] **Dockerización** — docker-compose con Apache, PHP, PostgreSQL y MySQL
+- [❌] **Dockerización** — NO realizar. El dashboard depende de mod_php + .htaccess + exec() a herramientas del host (git, composer, wp-cli, npm). Dockerizar requeriría bind-mounts y un contenedor de 2-3 GB sin ganancia real de portabilidad. `setup.sh` ya cubre 6 distros.
 - [⚪] **Monitoreo** — fuera del scope del proyecto (responsabilidad del operador del VPS)
 - [⚪] **Backup automático** — fuera del scope (infraestructura del servidor)
 - [🔗] **Fail2ban** — documentado en README. Los intentos fallidos se registran en `auth_logs`.
@@ -30,9 +30,9 @@
 
 ## pgAdmin4
 
-- [ ] **Afinar WSGI** — aumentar procesos/threads en `WSGIDaemonProcess` para entornos con más carga
-- [ ] **Autologin** — pasar token de sesión del dashboard a pgAdmin4 para evitar doble login
-- [ ] **Proxy reverso** — servir pgAdmin4 bajo el mismo dominio que el dashboard
+- [x] **Afinar WSGI** — `pgadmin4-optimize.conf`: 4 procesos × 15 threads.
+- [x] **Proxy reverso** — incluido en `pgadmin4-optimize.conf`: ProxyPass a 127.0.0.1:5050.
+- [❌] **Autologin** — NO realizar. Requiere modificar el core Python/Flask de pgAdmin4. Frágil (se rompe al actualizar pgAdmin).
 
 ## Código
 

@@ -40,14 +40,17 @@ final class ServiceDetector
 
     public function isMySQLAlive(): bool
     {
-        exec('pgrep mysqld 2>/dev/null', $_, $exit);
-        return $exit === 0;
+        exec('pgrep -x mysqld 2>/dev/null', $_, $exitMysql);
+        exec('pgrep -x mariadbd 2>/dev/null', $_, $exitMaria);
+        return $exitMysql === 0 || $exitMaria === 0;
     }
 
     public function isPgAdmin4Available(): bool
     {
         $conf = file_exists('/etc/apache2/conf-enabled/pgadmin4.conf')
-             || file_exists('/etc/apache2/conf-available/pgadmin4.conf');
+             || file_exists('/etc/apache2/conf-available/pgadmin4.conf')
+             || file_exists('/etc/httpd/conf.d/pgadmin4.conf')
+             || file_exists('/etc/httpd/conf/pgadmin4.conf');
         if (!$conf) {
             return false;
         }
@@ -64,7 +67,8 @@ final class ServiceDetector
         }
         $conf = file_exists('/etc/phpmyadmin/apache.conf')
              || file_exists('/etc/apache2/conf-enabled/phpmyadmin.conf')
-             || file_exists('/etc/apache2/conf-available/phpmyadmin.conf');
+             || file_exists('/etc/apache2/conf-available/phpmyadmin.conf')
+             || file_exists('/etc/httpd/conf.d/phpmyadmin.conf');
         if (!$conf) {
             return false;
         }

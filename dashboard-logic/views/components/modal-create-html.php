@@ -32,7 +32,7 @@
                         <label class="form-label text-light">Nombre del directorio</label>
                         <input type="text" name="directory" class="form-control bg-dark text-light border-secondary"
                                placeholder="ej: landing-page" required>
-                        <small class="text-secondary">Se creará en <code>/mnt/vol/projects/apache/</code>.</small>
+                        <small class="text-secondary">Se creará en el directorio raíz del proyecto.</small>
                     </div>
                     <div class="tab-content">
                         <div class="tab-pane fade show active" id="htmlTabScratch" role="tabpanel">

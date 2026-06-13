@@ -195,6 +195,21 @@ Esto crea los niveles (admin, operator, revisor, client), los 8 permisos del sis
 > Creá tu propio usuario admin desde el dashboard (Usuarios → Crear Usuario)
 > y luego eliminá o cambiá la clave de los usuarios de prueba.
 
+### Servicios adicionales
+
+```bash
+# phpMyAdmin
+sudo bash setup-phpmyadmin.sh
+
+# PostgreSQL + pgAdmin4
+sudo bash setup-postgres.sh
+
+# Todo junto
+sudo bash setup-services-all.sh
+```
+
+Guía completa para IAs en [`SETUP-SERVICES.md`](SETUP-SERVICES.md).
+
 ### Crear proyectos desde el dashboard
 
 Los administradores pueden crear proyectos directamente desde la interfaz web:

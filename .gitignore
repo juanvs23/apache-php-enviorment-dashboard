@@ -9,11 +9,18 @@
 !.htaccess
 !env-loader.php
 !auth-check.php
+!fix-admin.php
 !setup.sh
-!seed.php
+!setup-phpmyadmin.sh
+!setup-postgres.sh
+!setup-services-all.sh
 !SETUP.md
+!SETUP-SERVICES.md
+!UPGRADE.md
 !migrations/
 !migrations/**
+!pgadmin4-optimize.conf
+!robots.txt
 
 # ─── Assets (Bootstrap) ───────────────────────────────────────────────────
 !assets/
