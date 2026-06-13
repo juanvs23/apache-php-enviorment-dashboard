@@ -26,11 +26,11 @@ final class Connection
     public static function get(): PDO
     {
         if (self::$instance === null) {
-            $driver = $$_ENV['DB_DRIVER'] ?? 'mysql';
-            $host   = $$_ENV['DB_HOST']   ?? 'localhost';
-            $port   = $$_ENV['DB_PORT']   ?? '3306';
-            $dbName = $$_ENV['DB_NAME']   ?? 'apache-dashboard';
-            $user   = $$_ENV['DB_USER']   ?? '';
+            $driver = $_ENV['DB_DRIVER'] ?? 'mysql';
+            $host   = $_ENV['DB_HOST']   ?? 'localhost';
+            $port   = $_ENV['DB_PORT']   ?? '3306';
+            $dbName = $_ENV['DB_NAME']   ?? 'apache-dashboard';
+            $user   = $_ENV['DB_USER']   ?? '';
             $pass   = $_ENV['DB_PASS']   ?? '';
 
             $dsn = sprintf('%s:host=%s;port=%s;dbname=%s;charset=utf8mb4', $driver, $host, $port, $dbName);
