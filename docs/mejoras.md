@@ -10,7 +10,7 @@
 - [x] **Gestión de proyectos** — crear, editar y eliminar proyectos con asignación de usuarios. Auto-save a MySQL desde la UI.
 - [x] **UX crear proyectos** — validación client-side onblur, auto-slug nombre→directorio, loading spinner, detección de DB existente (async)
 - [x] **phpMyAdmin** — script `setup-phpmyadmin.sh` para instalar desde zip. Detección de instalaciones en subdirectorios.
-- [ ] **Redis / Memcached** — detectar si están instalados y mostrar estado
+- [❌] **Redis / Memcached** — No implementar.
 - [x] **Logs en vivo** — tab 📜 Logs (solo server.view). Apache error log, últimas 100 líneas, polling 5s.
 - [x] **Estadísticas de proyectos** — tab 📊 con cards por tipo, barras de progreso y gráfico stacked
 - [x] **Búsqueda y filtros** — barra 🔍 en grilla de proyectos. Filtra por nombre o tipo client-side en tiempo real.
@@ -18,7 +18,7 @@
 - [x] **Notificaciones de servicios** — polling cada 30s. Badges en Server Info se actualizan en vivo. Toast si un servicio cae o vuelve.
 - [x] **Editor de .env** — `?edit_env=1` (solo admin). Editor monoespaciado con backup automático.
 - [x] **Multi-usuario en proyectos** — JSON en `user_own` con `is_logeable` por usuario. Select2 con búsqueda AJAX. Toggle login.
-- [ ] **Multi-idioma** — soporte para español/inglés vía archivos de traducción
+- [⏳] **Multi-idioma** — Delegado.
 
 ## Infraestructura
 
@@ -49,4 +49,4 @@
 - [x] **Migraciones versionadas** — tabla `migrations` con control de versión. `Migration::apply()` aplica secuencialmente las no ejecutadas.
 - [x] **Índices** — composite index `idx_email_created` en `auth_logs`. Resto de tablas con índices adecuados.
 - [x] **Seed data versionado** — `SEED_ENV` en .env: `dev` (default, contraseñas conocidas), `staging` (aleatorias fuertes), `prod` (solo admin).
-- [ ] **Soft delete** — implementar borrado lógico en usuarios y proyectos
+- [❌] **Soft delete** — No implementar.
