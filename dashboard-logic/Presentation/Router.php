@@ -122,6 +122,7 @@ final class Router
                 ServiceContainer::get(\Dashboard\Application\UseCase\Project\AssignProjectUseCase::class),
                 $this->authContext,
                 ServiceContainer::get(LegacyReader::class),
+                ServiceContainer::get(\Dashboard\Application\Repository\ProjectRepositoryInterface::class),
             );
 
             if ($tab === 'levels') {

@@ -60,12 +60,12 @@ final class SaveProjectUseCaseTest extends TestCase
 
         self::assertSame('New Name', $updated->projectName());
         self::assertSame('user-42', $updated->userOwnId());
-        self::assertTrue($updated->aceptLogin());
+        self::assertFalse($updated->aceptLogin());
     }
 
     public function test_update_with_null_user_unassigns(): void
     {
-        $project = new Project('uuid-1', 'Test', 'user-1', true);
+        $project = new Project('uuid-1', 'Test', 'user-1');
 
         $this->projectRepo->method('findById')
             ->willReturn($project);

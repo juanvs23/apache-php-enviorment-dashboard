@@ -1,0 +1,81 @@
+-- ============================================================================
+-- Migración 004: Actualización desde v1.1.0 → v1.5.0
+-- ============================================================================
+-- Aplica todos los cambios necesarios para instalaciones existentes.
+-- Seguro para ejecutar múltiples veces (usa IF NOT EXISTS / IF EXISTS).
+-- ============================================================================
+
+-- 1. Convertir user_own de CHAR(36) a JSON ──────────────────────────────────
+--    Migrar datos existentes: cada user_own → [{"userID": uuid, "user_name": "", "is_logeable": acept_login}]
+
+-- Agregar columna temporal JSON
+ALTER TABLE `Project`
+  ADD COLUMN IF NOT EXISTS `user_own_json` JSON DEFAULT NULL AFTER `user_own`;
+
+-- Migrar datos existentes
+UPDATE `Project`
+SET `user_own_json` = JSON_ARRAY(
+    JSON_OBJECT(
+        'userID', `user_own`,
+        'user_name', COALESCE((SELECT `name` FROM `USERS` WHERE `userID` = `Project`.`user_own`), (SELECT `email` FROM `USERS` WHERE `userID` = `Project`.`user_own`), `user_own`),
+        'is_logeable', IF(`acept_login` = 1, true, false)
+    )
+)
+WHERE `user_own` IS NOT NULL AND `user_own_json` IS NULL;
+
+-- Eliminar FK y columna vieja
+ALTER TABLE `Project` DROP FOREIGN KEY IF EXISTS `fk_project_user`;
+ALTER TABLE `Project` DROP KEY IF EXISTS `fk_project_user`;
+ALTER TABLE `Project` DROP COLUMN IF EXISTS `user_own`;
+ALTER TABLE `Project` DROP COLUMN IF EXISTS `acept_login`;
+
+-- Renombrar nueva columna
+ALTER TABLE `Project` CHANGE COLUMN `user_own_json` `user_own` JSON DEFAULT NULL;
+
+-- 2. Tablas nuevas ──────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS `auth_logs` (
+    `id`         INT AUTO_INCREMENT PRIMARY KEY,
+    `email`      VARCHAR(255) NOT NULL,
+    `action`     VARCHAR(20)  NOT NULL,
+    `ip_address` VARCHAR(45)  NOT NULL,
+    `user_agent` VARCHAR(512) DEFAULT NULL,
+    `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_email` (`email`),
+    KEY `idx_action` (`action`),
+    KEY `idx_created` (`created_at`),
+    KEY `idx_email_created` (`email`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `migrations` (
+    `version`    VARCHAR(10)  NOT NULL,
+    `applied_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. Actualizar permisos: cliente ya no tiene projects.acept_login ─────────
+
+SET @client_level = (SELECT `levelsID` FROM `levels` WHERE `level_name` = 'client' LIMIT 1);
+SET @acept_perm  = (SELECT `id` FROM `permissions` WHERE `perm_key` = 'projects.acept_login' LIMIT 1);
+
+DELETE FROM `level_permissions`
+WHERE `levelID` = @client_level AND `perm_id` = @acept_perm;
+
+-- 4. Actualizar nombres de usuarios en user_own (si no se migraron) ─────────
+
+UPDATE `Project` p
+SET `user_own` = (
+    SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'userID', u2.`userID`,
+            'user_name', COALESCE(u2.`name`, u2.`email`),
+            'is_logeable', CAST(JSON_EXTRACT(u2.entry, '$.is_logeable') AS UNSIGNED)
+        )
+    )
+    FROM JSON_TABLE(p.`user_own`, '$[*]' COLUMNS(
+        `userID` CHAR(36) PATH '$.userID',
+        entry JSON PATH '$'
+    )) AS u2
+    JOIN `USERS` u2real ON u2real.`userID` = u2.`userID`
+)
+WHERE p.`user_own` IS NOT NULL;

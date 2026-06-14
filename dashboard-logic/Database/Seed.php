@@ -83,7 +83,7 @@ final class Seed
             }
         }
 
-        // Client: only profile.edit
+        // Client: only profile.edit (no projects.acept_login — login is per-user via JSON)
         if ($clientLevel) {
             $clientPerm = $pdo->query("SELECT id FROM permissions WHERE perm_key = 'profile.edit' LIMIT 1")->fetchColumn();
             if ($clientPerm) {

@@ -18,7 +18,7 @@ require_once __DIR__ . '/env-loader.php';
 $__script = $_SERVER['SCRIPT_NAME'] ?? '';
 
 // ─── Permitir el dashboard y sus assets ─────────────────────────────────
-if (preg_match('#^/(index\.php|dashboard-logic/wp-auto-login\.php|assets/)#', $__script)) {
+if (preg_match('#^/(index\.php|api\.php|dashboard-logic/wp-auto-login\.php|assets/)#', $__script)) {
     return;
 }
 

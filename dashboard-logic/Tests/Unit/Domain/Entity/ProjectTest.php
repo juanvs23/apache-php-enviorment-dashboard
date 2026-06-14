@@ -23,11 +23,10 @@ final class ProjectTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->project = new Project(
+        $this->project =             new Project(
             self::PROJECT_ID,
             'Mi Proyecto',
             'user-123',
-            true,
         );
     }
 
@@ -36,17 +35,17 @@ final class ProjectTest extends TestCase
         self::assertSame(self::PROJECT_ID, $this->project->projectId());
         self::assertSame('Mi Proyecto', $this->project->projectName());
         self::assertSame('user-123', $this->project->userOwnId());
-        self::assertTrue($this->project->aceptLogin());
+        self::assertCount(1, $this->project->getUsers());
     }
 
-    public function test_create_factory_creates_unassigned_with_login_disabled(): void
+    public function test_create_factory_creates_unassigned(): void
     {
         $project = Project::create(self::PROJECT_ID, 'Nuevo');
 
         self::assertSame(self::PROJECT_ID, $project->projectId());
         self::assertSame('Nuevo', $project->projectName());
         self::assertNull($project->userOwnId());
-        self::assertFalse($project->aceptLogin());
+        self::assertCount(0, $project->getUsers());
     }
 
     public function test_assignToUser_sets_user(): void
@@ -63,15 +62,14 @@ final class ProjectTest extends TestCase
         self::assertNull($this->project->userOwnId());
     }
 
-    public function test_enableLogin_sets_aceptLogin_true(): void
+    public function test_enableLogin_is_noop(): void
     {
-        $project = new Project('p-1', 'Test', null, false);
+        $project = new Project('p-1', 'Test');
         $project->enableLogin();
-
-        self::assertTrue($project->aceptLogin());
+        self::assertFalse($project->aceptLogin()); // no-op
     }
 
-    public function test_disableLogin_sets_aceptLogin_false(): void
+    public function test_disableLogin_is_noop(): void
     {
         $this->project->disableLogin();
         self::assertFalse($this->project->aceptLogin());
@@ -83,9 +81,12 @@ final class ProjectTest extends TestCase
         self::assertSame('Nuevo Nombre', $this->project->projectName());
     }
 
-    public function test_assignToUser_overwrites_previous_assignment(): void
+    public function test_addUser_sets_user(): void
     {
-        $this->project->assignToUser('user-999');
-        self::assertSame('user-999', $this->project->userOwnId());
+        $project = Project::create('fresh', 'Fresh');
+        $project->addUser('user-999', true, 'Test User');
+        self::assertTrue($project->hasUser('user-999'));
+        self::assertTrue($project->isLogeableForUser('user-999'));
+        self::assertCount(1, $project->getUsers());
     }
 }

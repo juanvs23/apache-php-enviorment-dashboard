@@ -2,6 +2,22 @@
 
 ## 1.5.0 (2026-06-12)
 
+### Multi-usuario en proyectos
+
+- **`user_own` ahora es JSON**: `[{"userID":"uuid","user_name":"Juan","is_logeable":true}]`. Reemplaza el modelo de un solo usuario + flag global.
+- **Columna `acept_login` eliminada** de Project. El login es por usuario, no por proyecto.
+- **API endpoints** (`api.php`): search users, get/set project users, toggle login. Bypass de auth-check.
+- **UI**: Select2-style multi-select con búsqueda AJAX. Chips con toggle 🔑/🔒. Modal "Asignar cliente".
+- **Cliente sin `projects.acept_login`**: solo ve botones si su `is_logeable` es true en el JSON.
+- **`findByUser`** usa `JSON_SEARCH` (compatible MySQL 8.0).
+- **`ServiceDetector`**: lógica de detección de servicios centralizada (PostgreSQL, MySQL, pgAdmin, phpMyAdmin). Reemplaza código duplicado en server-info.php y endpoint.
+- **Rediseño completo de cards**: gradiente, chips, botones translúcidos. Consistente en dashboard, admin, niveles.
+- **Vista refactorizada**: DRY con `_user-card.php` y `_user-form-fields.php`. 524→299 líneas.
+- **Seed versionado**: `SEED_ENV` (dev/staging/prod).
+- **Estadísticas y Logs**: solo visibles con `server.view`.
+- **Migraciones versionadas**: tabla `migrations` con control 001/002/003/004. FK obsoleta eliminada de 001.
+- **`migrations/004-upgrade-from-v1.1.sql`**: migración completa para instalaciones existentes (CHAR(36)→JSON, auth_logs, permisos).
+
 ### Deuda técnica saldada — Fase 6 (12/12)
 
 - **`helpers.php` eliminado** — `get_os()` inlineado en `server-info.php`, `type_badge()` ya existía como método privado en DashboardController, `encriptar()`/`desencriptar()` eran código muerto

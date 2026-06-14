@@ -10,6 +10,7 @@
 !env-loader.php
 !auth-check.php
 !fix-admin.php
+!api.php
 !setup.sh
 !setup-phpmyadmin.sh
 !setup-postgres.sh

@@ -33,159 +33,17 @@
             </button>
         </div>
 
-        <div class="tab-content container px-0">
-
-            <!-- ─── Lista de Usuarios ─────────────────────────────── -->
-            <div class="tab-pane fade show active" id="tabListaUsuarios">
-                <?php if (empty($users)): ?>
-                    <p class="text-muted text-center py-4">No hay usuarios registrados</p>
-                <?php else: ?>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+        <?php if (empty($users)): ?>
+            <p class="text-muted text-center py-4">No hay usuarios registrados</p>
+        <?php else: ?>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
                 <?php foreach ($users as $u): ?>
-                    <div class="col">
-                        <div class="card bg-dark border-secondary h-100">
-                            <div class="card-body d-flex flex-column text-light">
-                                <div class="mb-1">
-                                    <small class="text-secondary">Email</small>
-                                    <div><code class="fs-6"><?= htmlspecialchars($u['email']) ?></code></div>
-                                </div>
-                                <div class="mb-1">
-                                    <small class="text-secondary">Nombre</small>
-                                    <div class="text-light"><?= htmlspecialchars($u['name'] ?? '—') ?></div>
-                                </div>
-                                <div class="mb-2">
-                                    <small class="text-secondary">Nivel</small>
-                                    <div>
-                                        <span class="badge bg-<?= $u['is_admin_badge'] ? 'danger' : 'primary' ?> fs-6">
-                                            <?= htmlspecialchars($u['level_name']) ?>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="mt-auto d-flex gap-1">
-                                    <button class="btn btn-sm btn-outline-warning flex-fill" data-bs-toggle="modal"
-                                            data-bs-target="#modalEditUser-<?= htmlspecialchars($u['userID']) ?>">
-                                        ✏️ Editar
-                                    </button>
-                                    <form method="post" class="d-inline flex-fill"
-                                          onsubmit="return confirm('¿Eliminar usuario <?= htmlspecialchars($u['email']) ?>?')">
-                                        <input type="hidden" name="action" value="delete_user">
-                                        <input type="hidden" name="userID" value="<?= htmlspecialchars($u['userID']) ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">🗑 Eliminar</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal Editar -->
-                        <div class="modal fade" id="modalEditUser-<?= htmlspecialchars($u['userID']) ?>" tabindex="-1">
-                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content bg-dark border-secondary">
-                                    <div class="modal-header border-secondary">
-                                        <h5 class="modal-title text-light">Editar Usuario</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <form method="post">
-                                        <div class="modal-body">
-                                            <input type="hidden" name="action" value="update_user">
-                                            <input type="hidden" name="userID" value="<?= htmlspecialchars($u['userID']) ?>">
-                                            <div class="mb-3">
-                                                <label class="form-label text-light">Email</label>
-                                                <input type="email" name="email" class="form-control"
-                                                       value="<?= htmlspecialchars($u['email']) ?>" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label text-light">Nombre</label>
-                                                <input type="text" name="name" class="form-control"
-                                                       value="<?= htmlspecialchars($u['name'] ?? '') ?>" placeholder="Nombre">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label text-light">Nueva contraseña</label>
-                                                <div class="position-relative">
-                                                    <input type="password" name="password" id="editPassword-<?= htmlspecialchars($u['userID']) ?>"
-                                                           class="form-control pe-5" placeholder="Vacío = sin cambios">
-                                                    <button type="button"
-                                                            class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"
-                                                            onclick="togglePassword('editPassword-<?= htmlspecialchars($u['userID']) ?>', this)" tabindex="-1"
-                                                            aria-label="Mostrar u ocultar contraseña">
-                                                        Mostrar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label text-light">Nivel</label>
-                                                <select name="level" class="form-select" required>
-                                                    <?php foreach ($levels as $l): ?>
-                                                    <option value="<?= htmlspecialchars($l['levelsID']) ?>"
-                                                        <?= $l['levelsID'] === $u['level'] ? 'selected' : '' ?>>
-                                                        <?= htmlspecialchars($l['level_name']) ?>
-                                                    </option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-secondary">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-warning">Guardar Cambios</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <?php require __DIR__ . '/components/_user-card.php'; ?>
                 <?php endforeach; ?>
-                </div>
-                <?php endif; ?>
             </div>
+        <?php endif; ?>
 
-            <!-- ─── Crear Usuario ──────────────────────────────────── -->
-            <div class="tab-pane fade" id="tabCrearUsuario">
-                <div class="card bg-dark border-secondary">
-                    <div class="card-body">
-                        <form method="post" class="row g-3">
-                            <input type="hidden" name="action" value="create_user">
-
-                            <div class="col-12 col-md-4">
-                                <label class="form-label text-light">Email</label>
-                                <input type="email" name="email" class="form-control" required>
-                            </div>
-                            <div class="col-12 col-md-3">
-                                <label class="form-label text-light">Nombre</label>
-                                <input type="text" name="name" class="form-control" placeholder="Opcional">
-                            </div>
-                            <div class="col-12 col-md-3">
-                                <label class="form-label text-light">Contraseña</label>
-                                <div class="position-relative">
-                                    <input type="password" name="password" id="tabCreatePassword"
-                                           class="form-control pe-5" required>
-                                    <button type="button"
-                                            class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"
-                                            onclick="togglePassword('tabCreatePassword', this)" tabindex="-1"
-                                            aria-label="Mostrar u ocultar contraseña">
-                                        Mostrar
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-2">
-                                <label class="form-label text-light">Nivel</label>
-                                <select name="level" class="form-select" required>
-                                    <?php foreach ($levels as $l): ?>
-                                    <option value="<?= htmlspecialchars($l['levelsID']) ?>">
-                                        <?= htmlspecialchars($l['level_name']) ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-success">Crear Usuario</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ─── Modal Crear Usuario ────────────────────────────────── -->
+        <!-- Modal Crear Usuario -->
         <div class="modal fade" id="modalCrearUsuario" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content bg-dark border-secondary">
@@ -196,37 +54,8 @@
                     <form method="post">
                         <div class="modal-body">
                             <input type="hidden" name="action" value="create_user">
-                            <div class="mb-3">
-                                <label class="form-label text-light">Email</label>
-                                <input type="email" name="email" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-light">Nombre</label>
-                                <input type="text" name="name" class="form-control" placeholder="Opcional">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-light">Contraseña</label>
-                                <div class="position-relative">
-                                    <input type="password" name="password" id="createPassword"
-                                           class="form-control pe-5" required>
-                                    <button type="button"
-                                            class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y me-1 text-decoration-none"
-                                            onclick="togglePassword('createPassword', this)" tabindex="-1"
-                                            aria-label="Mostrar u ocultar contraseña">
-                                        Mostrar
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-light">Nivel</label>
-                                <select name="level" class="form-select" required>
-                                    <?php foreach ($levels as $l): ?>
-                                    <option value="<?= htmlspecialchars($l['levelsID']) ?>">
-                                        <?= htmlspecialchars($l['level_name']) ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+                            <?php $user = null; $prefix = 'create-'; $showPass = true;
+                                  require __DIR__ . '/components/_user-form-fields.php'; ?>
                         </div>
                         <div class="modal-footer border-secondary">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -265,72 +94,109 @@
                 <?php if (empty($projects)): ?>
                     <p class="text-muted text-center py-4">No hay proyectos creados</p>
                 <?php else: ?>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+                <div class="row g-3">
                 <?php foreach ($projects as $p): ?>
-                    <div class="col">
-                        <div class="card bg-dark border-secondary h-100">
-                            <div class="card-body d-flex flex-column">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title text-light mb-0 text-truncate">
-                                        <?= htmlspecialchars($p['project_name'] ?? '?') ?>
-                                    </h6>
-                                    <span class="badge bg-<?= $p['acept_login'] ? 'success' : 'secondary' ?> flex-shrink-0 ms-2">
-                                        Login <?= $p['acept_login'] ? '✅' : '❌' ?>
-                                    </span>
-                                </div>
-                                <div class="mb-2 small">
-                                    <?php if ($p['user_email']): ?>
-                                        <span class="text-muted">👤</span>
-                                        <code><?= htmlspecialchars($p['user_email']) ?></code>
-                                        <?php if ($p['user_name']): ?>
-                                            <br><span class="text-info-emphasis ms-3"><?= htmlspecialchars($p['user_name']) ?></span>
-
-        <?php endif; ?>
-
-                                    <?php else: ?>
-                                        <span class="text-warning-emphasis">Sin asignar</span>
+                    <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100 project-admin-card"
+                             style="background: #1e2130; border-radius: 10px; overflow: hidden;">
+                            <!-- Header -->
+                            <div class="px-3 py-3 d-flex align-items-center gap-2"
+                                 style="background: linear-gradient(135deg, #23283a 0%, #1a1f30 100%); border-bottom: 1px solid #2d323e;">
+                                <span style="font-size: 1.2rem;">📁</span>
+                                <h6 class="mb-0 text-truncate flex-grow-1" style="color: #e4e6eb; font-weight: 600; font-size: 0.9rem;">
+                                    <?= htmlspecialchars($p['project_name'] ?? '?') ?>
+                                </h6>
+                                <span class="badge rounded-pill flex-shrink-0"
+                                      style="background: <?= $p['user_count'] ? 'rgba(63,185,80,0.15)' : 'rgba(139,148,158,0.15)' ?>;
+                                             color: <?= $p['user_count'] ? '#3fb950' : '#8b949e' ?>; font-size: 0.7rem; padding: 4px 10px;">
+                                    <?= $p['user_count'] ? $p['user_count'] . ' 👤' : 'Sin asignar' ?>
+                                </span>
+                            </div>
+                            <!-- Body -->
+                            <div class="card-body p-3 d-flex flex-column" style="gap: 10px;">
+                                <?php
+                                $pid = $p['id'];
+                                $assignedUsers = $p['user_own'] ? json_decode($p['user_own'], true) : [];
+                                ?>
+                                <div class="assigned-users-list" data-project="<?= htmlspecialchars($pid) ?>"
+                                     style="min-height: <?= $assignedUsers ? '' : '32px' ?>;">
+                                    <?php foreach ($assignedUsers as $u): ?>
+                                    <div class="assigned-user-chip"
+                                         data-user="<?= htmlspecialchars($u['userID']) ?>"
+                                         style="display: inline-flex; align-items: center; gap: 5px;
+                                                background: #1a3a5c; border-radius: 5px; padding: 4px 8px;
+                                                font-size: 0.72rem; margin: 0 4px 4px 0; transition: all .15s;">
+                                        <span style="color: #58a6ff;"><?= htmlspecialchars($u['user_name'] ?? $u['userID']) ?></span>
+                                        <span class="toggle-login-chip"
+                                              data-user="<?= htmlspecialchars($u['userID']) ?>"
+                                              data-project="<?= htmlspecialchars($pid) ?>"
+                                              data-logeable="<?= $u['is_logeable'] ? '1' : '0' ?>"
+                                              style="cursor:pointer;font-size:0.7rem;"
+                                              title="Click para activar/desactivar autologin">
+                                            <?= $u['is_logeable'] ? '🔑' : '🔒' ?>
+                                        </span>
+                                        <span class="remove-assigned-user"
+                                              data-user="<?= htmlspecialchars($u['userID']) ?>"
+                                              data-project="<?= htmlspecialchars($pid) ?>"
+                                              style="cursor:pointer; color:#f85149; font-size:0.85rem; opacity:0.5;
+                                                     transition:opacity .15s;"
+                                              onmouseover="this.style.opacity='1'"
+                                              onmouseout="this.style.opacity='0.5'">&times;</span>
+                                    </div>
+                                    <?php endforeach; ?>
+                                    <?php if (!$assignedUsers): ?>
+                                    <small class="text-muted fst-italic">Sin usuarios asignados</small>
                                     <?php endif; ?>
                                 </div>
-                                <div class="mt-auto pt-2 border-top border-secondary">
-                                    <form method="post" class="row g-1">
-                                        <input type="hidden" name="action" value="assign_project">
-                                        <input type="hidden" name="projectID" value="<?= htmlspecialchars($p['id']) ?>">
-                                        <div class="col-6">
-                                            <select name="userID" class="form-select form-select-sm">
-                                                <option value="">— Sin asignar —</option>
-                                                <?php foreach ($client_users as $cu): ?>
-                                                <option value="<?= htmlspecialchars($cu['userID']) ?>"
-                                                    <?= $cu['userID'] === $p['user_own'] ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($cu['email']) ?>
-                                                </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-3 d-flex align-items-center">
-                                            <div class="form-check">
-                                                <input type="checkbox" class="form-check-input" name="acept_login" value="1"
-                                                       id="acept-<?= htmlspecialchars($p['id']) ?>"
-                                                       <?= $p['acept_login'] ? 'checked' : '' ?>>
-                                                <label class="form-check-label text-light small" for="acept-<?= htmlspecialchars($p['id']) ?>">
-                                                    Login
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-3">
-                                            <button type="submit" class="btn btn-sm btn-primary w-100">Asignar</button>
-                                        </div>
-                                    </form>
-                                    <div class="d-flex gap-1 mt-1">
-                                        <button class="btn btn-sm btn-outline-warning flex-fill" data-bs-toggle="modal"
-                                                data-bs-target="#modalEditProject-<?= htmlspecialchars($p['id']) ?>">
-                                            ✏️ Editar
-                                        </button>
+                                <div class="d-grid gap-2 mt-auto">
+                                    <button type="button" class="btn btn-sm assign-client-btn py-2"
+                                            style="background: rgba(88,166,255,0.1); color: #58a6ff; border: 1px solid rgba(88,166,255,0.2);
+                                                   font-size: 0.78rem; font-weight: 500; transition: all .15s;"
+                                            onmouseover="this.style.background='rgba(88,166,255,0.2)'"
+                                            onmouseout="this.style.background='rgba(88,166,255,0.1)'"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalAssignClient-<?= htmlspecialchars($pid) ?>">
+                                        + Asignar cliente
+                                    </button>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm flex-fill py-1"
+                                                style="background: rgba(255,255,255,0.05); color: #8b949e; border: 1px solid #30363d; font-size: 0.72rem;"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalEditProject-<?= htmlspecialchars($p['id']) ?>">✏️ Editar</button>
                                         <form method="post" class="flex-fill"
                                               onsubmit="return confirm('¿Eliminar proyecto <?= htmlspecialchars($p['project_name']) ?>?')">
                                             <input type="hidden" name="action" value="delete_project">
                                             <input type="hidden" name="projectID" value="<?= htmlspecialchars($p['id']) ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">🗑 Eliminar</button>
+                                            <button type="submit" class="btn btn-sm w-100 py-1"
+                                                    style="background: rgba(248,81,73,0.1); color: #f85149; border: 1px solid rgba(248,81,73,0.2); font-size: 0.72rem;">🗑 Eliminar</button>
                                         </form>
+                                    </div>
+                            </div>
+                        </div>
+                        </div>
+
+                        <!-- Modal Asignar Cliente -->
+                        <div class="modal fade" id="modalAssignClient-<?= htmlspecialchars($pid) ?>" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content bg-dark border-secondary">
+                                    <div class="modal-header border-secondary">
+                                        <h6 class="modal-title text-light">Asignar cliente a <?= htmlspecialchars($p['project_name']) ?></h6>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" class="selected-client-id" value="">
+                                        <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary client-search mb-2"
+                                               placeholder="🔍 Buscar por email o nombre..." autocomplete="off">
+                                        <div class="client-results border border-secondary rounded"
+                                             style="max-height: 180px; overflow-y: auto; background: #1a1d23;"></div>
+                                        <div class="form-check mt-2">
+                                            <input type="checkbox" class="form-check-input" id="login-<?= htmlspecialchars($pid) ?>" checked>
+                                            <label class="form-check-label text-light small" for="login-<?= htmlspecialchars($pid) ?>">🔑 Permitir autologin</label>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-secondary">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-primary btn-sm save-client-btn">Guardar</button>
                                     </div>
                                 </div>
                             </div>
@@ -352,29 +218,6 @@
                                                 <label class="form-label text-light">Nombre del proyecto</label>
                                                 <input type="text" name="project_name" class="form-control" required
                                                        value="<?= htmlspecialchars($p['project_name'] ?? '') ?>">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label text-light">Asignar a usuario cliente</label>
-                                                <select name="userID" class="form-select">
-                                                    <option value="">— Sin asignar —</option>
-                                                    <?php foreach ($client_users as $cu): ?>
-                                                    <option value="<?= htmlspecialchars($cu['userID']) ?>"
-                                                        <?= $cu['userID'] === $p['user_own'] ? 'selected' : '' ?>>
-                                                        <?= htmlspecialchars($cu['email']) ?>
-                                                        <?php if ($cu['name']): ?>(<?= htmlspecialchars($cu['name']) ?>)<?php endif; ?>
-                                                    </option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="form-check">
-                                                    <input type="checkbox" class="form-check-input" name="acept_login" value="1"
-                                                           id="acept-modal-<?= htmlspecialchars($p['id']) ?>"
-                                                           <?= $p['acept_login'] ? 'checked' : '' ?>>
-                                                    <label class="form-check-label text-light" for="acept-modal-<?= htmlspecialchars($p['id']) ?>">
-                                                        Acepta Login
-                                                    </label>
-                                                </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer border-secondary">
@@ -409,24 +252,6 @@
                                     <label class="form-label text-light">Nombre del proyecto</label>
                                     <input type="text" name="project_name" class="form-control" required
                                            placeholder="ej: twilight, liberty">
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label text-light">Asignar a usuario cliente</label>
-                                    <select name="userID" class="form-select">
-                                        <option value="">— Sin asignar —</option>
-                                        <?php foreach ($client_users as $cu): ?>
-                                        <option value="<?= htmlspecialchars($cu['userID']) ?>">
-                                            <?= htmlspecialchars($cu['email']) ?>
-                                            <?php if ($cu['name']): ?>(<?= htmlspecialchars($cu['name']) ?>)<?php endif; ?>
-                                        </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-6 d-flex align-items-end pb-3">
-                                    <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" name="acept_login" value="1" id="acept-modal">
-                                        <label class="form-check-label text-light" for="acept-modal">Acepta Login</label>
-                                    </div>
                                 </div>
                             </div>
                         </div>

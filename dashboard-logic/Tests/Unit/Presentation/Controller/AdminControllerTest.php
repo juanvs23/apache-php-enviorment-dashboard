@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Presentation\Controller;
 
+use Dashboard\Application\Repository\ProjectRepositoryInterface;
 use Dashboard\Application\UseCase\Level\CreateLevelUseCase;
 use Dashboard\Application\UseCase\Level\DeleteLevelUseCase;
 use Dashboard\Application\UseCase\Level\UpdateLevelUseCase;
@@ -14,6 +15,7 @@ use Dashboard\Application\UseCase\Project\SaveProjectUseCase;
 use Dashboard\Application\UseCase\User\CreateUserUseCase;
 use Dashboard\Application\UseCase\User\DeleteUserUseCase;
 use Dashboard\Application\UseCase\User\UpdateUserUseCase;
+use Dashboard\Domain\Entity\Project;
 use Dashboard\Domain\Entity\User;
 use Dashboard\Domain\ValueObject\Email;
 use Dashboard\Infrastructure\Auth\AuthContext;
@@ -37,6 +39,7 @@ final class AdminControllerTest extends TestCase
     private AssignProjectUseCase $assignProject;
     private AuthContext $authContext;
     private LegacyReader $legacyReader;
+    private ProjectRepositoryInterface $projectRepository;
     private AdminController $controller;
 
     protected function setUp(): void
@@ -53,6 +56,7 @@ final class AdminControllerTest extends TestCase
         $this->assignProject   = $this->createMock(AssignProjectUseCase::class);
         $this->authContext     = $this->createMock(AuthContext::class);
         $this->legacyReader    = $this->createMock(LegacyReader::class);
+        $this->projectRepository = $this->createMock(ProjectRepositoryInterface::class);
 
         $this->controller = new AdminController(
             $this->createLevel,
@@ -67,6 +71,7 @@ final class AdminControllerTest extends TestCase
             $this->assignProject,
             $this->authContext,
             $this->legacyReader,
+            $this->projectRepository,
         );
 
         $_POST = [];
@@ -198,34 +203,36 @@ final class AdminControllerTest extends TestCase
 
     public function test_assign_project(): void
     {
-        $this->assignProject->expects(self::once())
-            ->method('assign')
-            ->with('proj-1', 'user-2', true);
+        $project = Project::create('proj-1', 'Test');
+        $this->projectRepository->method('findById')
+            ->with('proj-1')
+            ->willReturn($project);
 
-        $this->assignProject->expects(self::never())
-            ->method('unassign');
+        $this->projectRepository->expects(self::once())
+            ->method('save')
+            ->with($project);
 
-        $_POST = ['projectID' => 'proj-1', 'userID' => 'user-2', 'acept_login' => '1'];
+        $_POST = ['projectID' => 'proj-1', 'user_ids' => ['user-2'], 'logeable' => ['1']];
 
         $result = $this->invokePrivate('processAssignProject');
 
         self::assertTrue($result['success']);
+        self::assertTrue($project->hasUser('user-2'));
+        self::assertTrue($project->isLogeableForUser('user-2'));
     }
 
     public function test_unassign_project(): void
     {
-        $this->assignProject->expects(self::once())
-            ->method('unassign')
-            ->with('proj-1');
+        $project = new Project('proj-1', 'Test', json_encode([['userID' => 'user-3', 'is_logeable' => true]]), false);
+        $this->projectRepository->method('findById')->willReturn($project);
+        $this->projectRepository->expects(self::once())->method('save');
 
-        $this->assignProject->expects(self::never())
-            ->method('assign');
-
-        $_POST = ['projectID' => 'proj-1', 'userID' => ''];
+        $_POST = ['projectID' => 'proj-1', 'user_ids' => [], 'logeable' => []];
 
         $result = $this->invokePrivate('processAssignProject');
 
         self::assertTrue($result['success']);
+        self::assertEmpty($project->getUsers());
     }
 
     public function test_assign_project_missing_id_returns_error(): void

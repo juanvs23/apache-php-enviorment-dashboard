@@ -434,4 +434,142 @@
     // Start polling immediately, every 30 seconds
     checkServices();
     serviceTimer = setInterval(checkServices, 30000);
+
+    // ── Assign client modal: search + select + save ─────────
+    document.querySelectorAll('.assign-client-btn').forEach(function (btn) {
+        var modal = document.querySelector(btn.getAttribute('data-bs-target'));
+        if (!modal) return;
+        var searchInput = modal.querySelector('.client-search');
+        var resultsDiv = modal.querySelector('.client-results');
+        var loginChk = modal.querySelector('input[type="checkbox"]');
+        var selectedId = modal.querySelector('.selected-client-id');
+        var saveBtn = modal.querySelector('.save-client-btn');
+        var projectId = modal.id.replace('modalAssignClient-', '');
+        var timer = null;
+
+        // Reset modal on open
+        modal.addEventListener('show.bs.modal', function () {
+            searchInput.value = '';
+            resultsDiv.innerHTML = '';
+            selectedId.value = '';
+            saveBtn.disabled = true;
+        });
+
+        // Search
+        searchInput.addEventListener('input', function () {
+            clearTimeout(timer);
+            var q = searchInput.value.trim();
+            if (!q) { resultsDiv.innerHTML = ''; return; }
+            timer = setTimeout(function () {
+                resultsDiv.innerHTML = '<div class="text-muted small p-2">Buscando...</div>';
+                fetch('/api.php?action=users_search&q=' + encodeURIComponent(q))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        resultsDiv.innerHTML = '';
+                        if (!data.results || !data.results.length) {
+                            resultsDiv.innerHTML = '<div class="text-muted small p-2">Sin resultados</div>';
+                            return;
+                        }
+                        data.results.forEach(function (user) {
+                            var div = document.createElement('div');
+                            div.className = 'd-flex align-items-center gap-2 px-2 py-1 client-result-item';
+                            div.style.cssText = 'cursor:pointer;border-bottom:1px solid #2d323e;';
+                            div.setAttribute('data-id', user.id);
+                            div.innerHTML = '<span class="text-light small flex-grow-1">' + user.text + '</span><span class="check-mark" style="color:#3fb950;display:none;">✓</span>';
+                            div.addEventListener('click', function () {
+                                // Deselect all
+                                resultsDiv.querySelectorAll('.client-result-item').forEach(function (el) {
+                                    el.style.background = '';
+                                    el.querySelector('.check-mark').style.display = 'none';
+                                });
+                                // Select this one
+                                div.style.background = '#1a3a5c';
+                                div.querySelector('.check-mark').style.display = '';
+                                selectedId.value = user.id;
+                                saveBtn.disabled = false;
+                            });
+                            resultsDiv.appendChild(div);
+                        });
+                    });
+            }, 300);
+        });
+
+        // Save
+        saveBtn.addEventListener('click', function () {
+            var uid = selectedId.value;
+            if (!uid) return;
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Guardando...';
+            assignUser(projectId, uid, loginChk.checked);
+        });
+    });
+
+    function assignUser(projectId, userId, isLogeable) {
+        fetch('/api.php?action=project_users&id=' + encodeURIComponent(projectId))
+            .then(function (r) { return r.json(); })
+            .then(function (users) {
+                if (!Array.isArray(users)) users = [];
+                var existing = users.find(function (u) { return u.id === userId; });
+                if (!existing) users.push({ id: userId, logeable: isLogeable });
+                else existing.logeable = isLogeable;
+                return fetch('/api.php?action=project_users_update&id=' + encodeURIComponent(projectId), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_ids: users.map(function (u) { return u.id; }),
+                        logeable: users.map(function (u) { return u.logeable; })
+                    })
+                });
+            }).then(function () { location.reload(); });
+    }
+
+    // Remove assigned user
+    document.querySelectorAll('.remove-assigned-user').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var userId = btn.getAttribute('data-user');
+            var projectId = btn.getAttribute('data-project');
+            fetch('/api.php?action=project_users&id=' + encodeURIComponent(projectId))
+                .then(function (r) { return r.json(); })
+                .then(function (users) {
+                    if (!Array.isArray(users)) return;
+                    users = users.filter(function (u) { return u.id !== userId; });
+                    return fetch('/api.php?action=project_users_update&id=' + encodeURIComponent(projectId), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_ids: users.map(function (u) { return u.id; }),
+                            logeable: users.map(function (u) { return u.logeable; })
+                        })
+                    });
+                }).then(function () { location.reload(); });
+        });
+    });
+
+    // Toggle login on chip
+    document.querySelectorAll('.toggle-login-chip').forEach(function (el) {
+        el.addEventListener('click', function () {
+            var userId = el.getAttribute('data-user');
+            var projectId = el.getAttribute('data-project');
+            var current = el.getAttribute('data-logeable') === '1';
+            var newVal = !current;
+
+            // Update via API
+            fetch('/api.php?action=project_users&id=' + encodeURIComponent(projectId))
+                .then(function (r) { return r.json(); })
+                .then(function (users) {
+                    if (!Array.isArray(users)) return;
+                    users.forEach(function (u) {
+                        if (u.id === userId) u.logeable = newVal;
+                    });
+                    return fetch('/api.php?action=project_users_update&id=' + encodeURIComponent(projectId), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_ids: users.map(function (u) { return u.id; }),
+                            logeable: users.map(function (u) { return u.logeable; })
+                        })
+                    });
+                }).then(function () { location.reload(); });
+        });
+    });
 })();

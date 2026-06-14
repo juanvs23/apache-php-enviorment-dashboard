@@ -74,9 +74,11 @@ $newProjectTypes = [
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabServer" type="button">🖥️ Servidor</button>
         </li>
         <?php endif; ?>
+        <?php if ($canViewServer): ?>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabStats" type="button">📊 Estadísticas</button>
         </li>
+        <?php endif; ?>
         <?php if ($canViewServer): ?>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLogs" type="button">📜 Logs</button>
@@ -139,7 +141,6 @@ $newProjectTypes = [
         <!-- ─── Estadísticas ──────────────────────────────────────── -->
         <div class="tab-pane fade" id="tabStats">
             <?php
-            // Contar proyectos por tipo
             $stats = ['wordpress' => 0, 'laravel' => 0, 'html' => 0, 'node' => 0, 'otro' => 0];
             $total = count($projects);
             foreach ($projects as $p) {
@@ -150,31 +151,32 @@ $newProjectTypes = [
                 elseif ($t === 'node' || $t === 'vite')   $stats['node']++;
                 else                         $stats['otro']++;
             }
-
             $colors = [
-                'wordpress' => ['#21759B', 'primary'],
-                'laravel'   => ['#FF2D20', 'danger'],
-                'html'      => ['#E44D26', 'warning'],
-                'node'      => ['#539E43', 'success'],
-                'otro'      => ['#6e7681', 'secondary'],
+                'wordpress' => ['#21759B', '#3b82f6'],
+                'laravel'   => ['#FF2D20', '#ef4444'],
+                'html'      => ['#E44D26', '#f59e0b'],
+                'node'      => ['#539E43', '#22c55e'],
+                'otro'      => ['#6e7681', '#8b949e'],
             ];
+            $icons = ['wordpress' => '🌐', 'laravel' => '🔷', 'html' => '📄', 'node' => '⚡', 'otro' => '📦'];
             ?>
             <div class="row g-3">
                 <?php foreach ($stats as $type => $count): ?>
                 <?php if ($count > 0 || $total === 0): ?>
                 <?php $pct = $total > 0 ? round($count / $total * 100, 1) : 0; ?>
-                <div class="col-12 col-md-6 col-lg-3 mb-2">
-                    <div class="card h-100 border-0 shadow-sm" style="background: #2d323e; border-radius: 12px;">
-                        <div class="card-body text-center p-3">
-                            <div class="fs-2 fw-bold mb-1" style="color: <?= $colors[$type][0] ?>;">
-                                <?= $count ?>
+                <div class="col-12 col-md-6 col-lg-4 col-xl">
+                    <div class="card border-0 shadow-sm h-100" style="background: #1e2130; border-radius: 10px; overflow: hidden;">
+                        <div class="px-3 py-2 d-flex align-items-center gap-2"
+                             style="background: linear-gradient(135deg, #23283a 0%, #1a1f30 100%); border-bottom: 1px solid #2d323e;">
+                            <span style="font-size: 1rem;"><?= $icons[$type] ?></span>
+                            <span class="text-capitalize flex-grow-1" style="color: #e4e6eb; font-weight: 600; font-size: 0.8rem;"><?= $type ?></span>
+                            <span class="fw-bold" style="color: <?= $colors[$type][0] ?>; font-size: 1.1rem;"><?= $count ?></span>
+                        </div>
+                        <div class="card-body p-2" style="padding-top: 16px !important;">
+                            <div class="progress" style="height: 15px; background: #16181d;">
+                                <div class="progress-bar" style="width: <?= $pct ?>%; background: <?= $colors[$type][1] ?>; border-radius: 2px;"></div>
                             </div>
-                            <div class="text-light small text-capitalize mb-2"><?= $type ?></div>
-                            <div class="progress" style="height: 6px; background: #1a1d23;">
-                                <div class="progress-bar bg-<?= $colors[$type][1] ?>"
-                                     style="width: <?= $pct ?>%; border-radius: 3px;"></div>
-                            </div>
-                            <div style="color: #8b949e;" class="small mt-1"><?= $pct ?>%</div>
+                            <div style="color: #e4e6eb; font-size: 0.65rem; margin-top: 4px;"><?= $pct ?>% del total</div>
                         </div>
                     </div>
                 </div>
@@ -183,26 +185,25 @@ $newProjectTypes = [
             </div>
 
             <?php if ($total > 0): ?>
-            <div class="card border-0 shadow-sm mt-3" style="background: #2d323e; border-radius: 12px;">
+            <div class="card border-0 shadow-sm mt-3" style="background: #1e2130; border-radius: 10px; overflow: hidden;">
+                <div class="px-3 py-2" style="background: linear-gradient(135deg, #23283a 0%, #1a1f30 100%); border-bottom: 1px solid #2d323e;">
+                    <span style="color: #e4e6eb; font-weight: 600; font-size: 0.8rem;">📊 Distribución</span>
+                </div>
                 <div class="card-body p-3">
-                    <h6 class="text-light mb-3">Distribución</h6>
-                    <div class="progress-stacked" style="height: 24px; border-radius: 6px; overflow: hidden;">
+                    <div class="progress-stacked" style="height: 15px; border-radius: 6px; overflow: hidden;">
                         <?php foreach ($stats as $type => $count): ?>
                         <?php if ($count > 0): ?>
-                        <div class="progress-bar bg-<?= $colors[$type][1] ?>"
-                             role="progressbar"
-                             style="width: <?= $total > 0 ? round($count / $total * 100, 1) : 0 ?>%"
-                             title="<?= ucfirst($type) ?>: <?= $count ?>">
-                            <?= $count > 0 ? $count : '' ?>
-                        </div>
+                        <div class="progress-bar" role="progressbar"
+                             style="width: <?= round($count / $total * 100, 1) ?>%; background: <?= $colors[$type][1] ?>;"
+                             title="<?= ucfirst($type) ?>: <?= $count ?>"><?= $count ?></div>
                         <?php endif; ?>
                         <?php endforeach; ?>
                     </div>
                     <div class="d-flex flex-wrap gap-3 mt-2">
                         <?php foreach ($stats as $type => $count): ?>
                         <?php if ($count > 0): ?>
-                        <small style="color: #8b949e;">
-                            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:<?= $colors[$type][0] ?>;"></span>
+                        <small style="color: #e4e6eb; font-size: 0.7rem;">
+                            <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:<?= $colors[$type][1] ?>;"></span>
                             <?= ucfirst($type) ?>: <?= $count ?>
                         </small>
                         <?php endif; ?>

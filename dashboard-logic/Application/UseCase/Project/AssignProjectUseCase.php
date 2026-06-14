@@ -42,13 +42,7 @@ final class AssignProjectUseCase
             throw new \DomainException('Project not found');
         }
 
-        $project->assignToUser($userId);
-
-        if ($aceptLogin) {
-            $project->enableLogin();
-        } else {
-            $project->disableLogin();
-        }
+        $project->addUser($userId, $aceptLogin);
 
         $this->projectRepository->save($project);
 

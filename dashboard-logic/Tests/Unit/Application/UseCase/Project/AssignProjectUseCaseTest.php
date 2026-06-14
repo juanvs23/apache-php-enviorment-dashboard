@@ -66,7 +66,7 @@ final class AssignProjectUseCaseTest extends TestCase
 
     public function test_unassign_project(): void
     {
-        $project = new Project('uuid-1', 'Test', 'user-42', true);
+        $project = new Project('uuid-1', 'Test', 'user-42');
 
         $this->projectRepo->method('findById')
             ->with('uuid-1')
