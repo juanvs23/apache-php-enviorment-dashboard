@@ -84,12 +84,9 @@ final class Migration
             CREATE TABLE IF NOT EXISTS Project (
                 id           CHAR(36)      NOT NULL,
                 project_name TEXT,
-                user_own     CHAR(36)      DEFAULT NULL,
-                acept_login  TINYINT(1)    NOT NULL DEFAULT 0,
+                user_own     JSON          DEFAULT NULL,
                 PRIMARY KEY (id),
-                UNIQUE KEY uk_projectid (id),
-                KEY fk_project_user (user_own),
-                CONSTRAINT fk_project_user FOREIGN KEY (user_own) REFERENCES USERS (userID)
+                UNIQUE KEY uk_projectid (id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ');
 

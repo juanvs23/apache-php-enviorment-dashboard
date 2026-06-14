@@ -4,7 +4,7 @@
 
 - **Apache 2.4** con `mod_php` (NO PHP-FPM) y `mod_rewrite`
 - **PHP 8.3** con `pdo_mysql`, `openssl`, `mbstring`, `session`, `json`, `gd`, `zip`, `intl`, `curl`, `xml`
-- **MySQL 8.0** — base de datos `apache-dashboard` con tablas `levels`, `USERS`, `Project`, `permissions`, `level_permissions`, `auth_logs`
+- **MySQL 8.0** — base de datos `apache-dashboard` con tablas `levels`, `USERS`, `Project`, `permissions`, `level_permissions`, `auth_logs`, `migrations`
 - **Bootstrap 5** en `assets/` (sin CDN)
 
 ## Arquitectura (Clean Architecture, Fase 6 aplicada)
@@ -52,7 +52,7 @@ dashboard-logic/
 - **Cookie**: `project_user` almacena el email del usuario, 7 días (`COOKIE_EXPIRY`), path `/`
 - **Rate limiting**: `SessionManager` (5 intentos máx, ventana 15 min). Se consulta en `index.php` antes del login y se incrementa en `AuthController`.
 - **Levels**: `level_type` 0 = admin (todos los permisos), 1 = permisos por tabla `level_permissions`
-- **Permisos RBAC**: helper `can()` en `AuthContext`. Admin (type 0) tiene todos automáticamente.
+- **Permisos RBAC**: helper `can()` en `AuthContext`. Admin (type 0) tiene todos automáticamente. El login por proyecto es por usuario vía `is_logeable` en el JSON de `user_own`.
 - **8 permisos**: users.manage, users.edit_same_level, projects.manage, projects.view_all, projects.acept_login, server.view, badge.admin, profile.edit
 - **Protección de nivel admin**: `UpdateLevelUseCase` y `DeleteLevelUseCase` rechazan modificar el nivel admin (type 0)
 - **Logging**: `AuthLogger` escribe en `auth_logs` cada login (éxito/fallo) y logout. Visible en `?users=1&tab=logs` (solo admin).

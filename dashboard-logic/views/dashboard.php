@@ -74,9 +74,11 @@ $newProjectTypes = [
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabServer" type="button">🖥️ Servidor</button>
         </li>
         <?php endif; ?>
+        <?php if ($canViewServer): ?>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabStats" type="button">📊 Estadísticas</button>
         </li>
+        <?php endif; ?>
         <?php if ($canViewServer): ?>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLogs" type="button">📜 Logs</button>

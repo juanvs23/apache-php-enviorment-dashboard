@@ -17,6 +17,7 @@
 - [x] **Exportar credenciales** — botón 📋 Copiar credenciales en cada card. Copia URL + usuario + contraseña al portapapeles.
 - [x] **Notificaciones de servicios** — polling cada 30s. Badges en Server Info se actualizan en vivo. Toast si un servicio cae o vuelve.
 - [x] **Editor de .env** — `?edit_env=1` (solo admin). Editor monoespaciado con backup automático.
+- [x] **Multi-usuario en proyectos** — JSON en `user_own` con `is_logeable` por usuario. Select2 con búsqueda AJAX. Toggle login.
 - [ ] **Multi-idioma** — soporte para español/inglés vía archivos de traducción
 
 ## Infraestructura

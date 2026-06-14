@@ -7,123 +7,138 @@ namespace Dashboard\Domain\Entity;
 /**
  * Proyecto alojado en el servidor.
  *
- * Entidad pura del dominio que representa un proyecto web gestionado
- * por el dashboard (WordPress, Laravel, sitio estático, etc.).
+ * Soporta asignación multi-usuario vía JSON en user_own:
+ *   [{"userID": "uuid", "is_logeable": true}, ...]
  *
- * Cada proyecto puede estar asignado a un usuario y tener habilitado
- * o deshabilitado el acceso directo (login buttons).
- *
- * @property-read string      $projectId   UUID del proyecto
- * @property-read string      $projectName Nombre visible del proyecto
- * @property-read string|null $userOwnId   UUID del usuario asignado (null = sin asignar)
- * @property-read bool        $aceptLogin  Si los botones de acceso están habilitados
+ * @property-read string $projectId   UUID del proyecto
+ * @property-read string $projectName Nombre visible del proyecto
  */
 final class Project
 {
+    /** @var list<array{userID: string, user_name: string, is_logeable: bool}> */
+    private array $assignedUsers;
+
     /**
-     * @param string      $projectId   UUID único del proyecto
-     * @param string      $projectName Nombre del proyecto
-     * @param string|null $userOwnId   UUID del usuario propietario (opcional)
-     * @param bool        $aceptLogin  Si permite acceso directo
+     * @param string                            $projectId     UUID único del proyecto
+     * @param string                            $projectName   Nombre del proyecto
+     * @param string|null                       $userOwnRaw    JSON con usuarios asignados
+     * @param bool                              $aceptLogin    DEPRECATED — mantenido por compatibilidad
      */
     public function __construct(
         private readonly string $projectId,
         private string $projectName,
-        private ?string $userOwnId,
-        private bool $aceptLogin,
-    ) {}
-
-    /**
-     * Factory method: crea un Project sin asignación y con login deshabilitado.
-     *
-     * @param string $projectId   UUID del proyecto
-     * @param string $projectName Nombre del proyecto
-     * @return self               Nuevo proyecto sin asignar
-     */
-    public static function create(string $projectId, string $projectName): self
-    {
-        return new self($projectId, $projectName, null, false);
+        ?string $userOwnRaw = null,
+    ) {
+        if ($userOwnRaw === null || $userOwnRaw === '') {
+            $this->assignedUsers = [];
+        } else {
+            $decoded = json_decode($userOwnRaw, true);
+            if (is_array($decoded)) {
+                $this->assignedUsers = $decoded;
+            } else {
+                $this->assignedUsers = [['userID' => $userOwnRaw, 'user_name' => $userOwnRaw, 'is_logeable' => false]];
+            }
+        }
     }
 
-    /**
-     * Retorna el UUID del proyecto.
-     *
-     * @return string
-     */
+    public static function create(string $projectId, string $projectName): self
+    {
+        return new self($projectId, $projectName);
+    }
+
     public function projectId(): string
     {
         return $this->projectId;
     }
 
-    /**
-     * Retorna el nombre del proyecto.
-     *
-     * @return string
-     */
     public function projectName(): string
     {
         return $this->projectName;
     }
 
+    // ─── Multi-usuario ────────────────────────────────────────────
+
     /**
-     * Retorna el UUID del usuario asignado al proyecto.
-     *
-     * @return string|null UUID del usuario o null si no está asignado
+     * @return list<array{userID: string, is_logeable: bool}>
      */
+    public function getUsers(): array
+    {
+        return $this->assignedUsers;
+    }
+
+    public function addUser(string $userId, bool $isLogeable = false, string $userName = ''): void
+    {
+        $this->removeUser($userId);
+        $this->assignedUsers[] = ['userID' => $userId, 'user_name' => $userName, 'is_logeable' => $isLogeable];
+    }
+
+    public function removeUser(string $userId): void
+    {
+        $this->assignedUsers = array_values(array_filter(
+            $this->assignedUsers,
+            fn(array $u) => $u['userID'] !== $userId,
+        ));
+    }
+
+    public function hasUser(string $userId): bool
+    {
+        foreach ($this->assignedUsers as $u) {
+            if ($u['userID'] === $userId) return true;
+        }
+        return false;
+    }
+
+    public function isLogeableForUser(string $userId): bool
+    {
+        foreach ($this->assignedUsers as $u) {
+            if ($u['userID'] === $userId) return $u['is_logeable'];
+        }
+        return false;
+    }
+
+    /**
+     * Retorna el JSON para persistir en user_own.
+     */
+    public function userOwnJson(): ?string
+    {
+        return $this->assignedUsers ? json_encode($this->assignedUsers) : null;
+    }
+
+    // ─── Backward compat (DEPRECATED) ────────────────────────────
+
+    /** @deprecated Usar getUsers() */
     public function userOwnId(): ?string
     {
-        return $this->userOwnId;
+        return $this->assignedUsers ? $this->assignedUsers[0]['userID'] : null;
     }
 
-    /**
-     * Verifica si el proyecto tiene los botones de acceso habilitados.
-     *
-     * @return bool True si el acceso directo está habilitado
-     */
-    public function aceptLogin(): bool
-    {
-        return $this->aceptLogin;
-    }
-
-    /**
-     * Asigna el proyecto a un usuario.
-     *
-     * @param string $userId UUID del usuario a asignar
-     */
+    /** @deprecated Usar addUser() */
     public function assignToUser(string $userId): void
     {
-        $this->userOwnId = $userId;
+        $this->assignedUsers = [['userID' => $userId, 'user_name' => $userId, 'is_logeable' => false]];
     }
 
-    /**
-     * Desasigna el proyecto del usuario actual.
-     */
+    /** @deprecated Usar removeUser() */
     public function unassignUser(): void
     {
-        $this->userOwnId = null;
+        $this->assignedUsers = [];
     }
 
-    /**
-     * Habilita los botones de acceso directo.
-     */
-    public function enableLogin(): void
+    /** @deprecated Sin efecto — el login es por usuario en user_own */
+    public function enableLogin(): void {}
+
+    /** @deprecated Sin efecto — el login es por usuario en user_own */
+    public function disableLogin(): void {}
+
+    /** @deprecated Usar isLogeableForUser() — retorna si algún usuario tiene login */
+    public function aceptLogin(): bool
     {
-        $this->aceptLogin = true;
+        foreach ($this->assignedUsers as $u) {
+            if ($u['is_logeable']) return true;
+        }
+        return false;
     }
 
-    /**
-     * Deshabilita los botones de acceso directo.
-     */
-    public function disableLogin(): void
-    {
-        $this->aceptLogin = false;
-    }
-
-    /**
-     * Renombra el proyecto.
-     *
-     * @param string $newName Nuevo nombre del proyecto
-     */
     public function rename(string $newName): void
     {
         $this->projectName = $newName;

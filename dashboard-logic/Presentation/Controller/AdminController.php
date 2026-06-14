@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dashboard\Presentation\Controller;
 
+use Dashboard\Application\Repository\ProjectRepositoryInterface;
 use Dashboard\Application\UseCase\Level\CreateLevelUseCase;
 use Dashboard\Application\UseCase\Level\DeleteLevelUseCase;
 use Dashboard\Application\UseCase\Level\UpdateLevelUseCase;
@@ -62,6 +63,7 @@ final class AdminController
         private readonly AssignProjectUseCase $assignProject,
         private readonly AuthContext $authContext,
         private readonly LegacyReader $legacyReader,
+        private readonly ProjectRepositoryInterface $projectRepository,
     ) {}
 
     /**
@@ -256,19 +258,27 @@ final class AdminController
     private function processAssignProject(): array
     {
         $projectId = \trim($_POST['projectID'] ?? '');
-        $userId    = \trim($_POST['userID'] ?? '');
-        $acept     = (bool) ($_POST['acept_login'] ?? 0);
-
         if ($projectId === '') {
             return ['success' => false, 'error' => 'ID de proyecto requerido'];
         }
 
-        if ($userId === '') {
-            $this->assignProject->unassign($projectId);
-        } else {
-            $this->assignProject->assign($projectId, $userId, $acept);
+        $project = $this->projectRepository->findById($projectId);
+        if ($project === null) {
+            return ['success' => false, 'error' => 'Proyecto no encontrado'];
         }
 
+        $userIds = $_POST['user_ids'] ?? [];
+        $logeable = $_POST['logeable'] ?? [];
+
+        // Reemplazar todos los usuarios
+        $project->unassignUser();
+        foreach ($userIds as $i => $uid) {
+            if ($uid === '') continue;
+            $isLogeable = isset($logeable[$i]) && $logeable[$i] === '1';
+            $project->addUser($uid, $isLogeable);
+        }
+
+        $this->projectRepository->save($project);
         return ['success' => true];
     }
 

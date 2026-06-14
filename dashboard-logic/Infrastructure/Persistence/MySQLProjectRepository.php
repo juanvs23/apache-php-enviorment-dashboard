@@ -42,8 +42,8 @@ final class MySQLProjectRepository implements ProjectRepositoryInterface
     public function findById(string $projectId): ?Project
     {
         $stmt = $this->pdo->prepare('
-            SELECT id, project_name, user_own, acept_login
-            FROM Project
+                SELECT id, project_name, user_own
+                FROM Project
             WHERE id = :id
             LIMIT 1
         ');
@@ -59,8 +59,8 @@ final class MySQLProjectRepository implements ProjectRepositoryInterface
     public function findAll(): array
     {
         $rows = $this->pdo->query('
-            SELECT id, project_name, user_own, acept_login
-            FROM Project
+                SELECT id, project_name, user_own
+                FROM Project
             ORDER BY project_name
         ')->fetchAll();
 
@@ -72,12 +72,13 @@ final class MySQLProjectRepository implements ProjectRepositoryInterface
      */
     public function findByUser(string $userId): array
     {
-        $stmt = $this->pdo->prepare('
-            SELECT id, project_name, user_own, acept_login
-            FROM Project
-            WHERE user_own = :userId
+        $stmt = $this->pdo->prepare("
+                SELECT id, project_name, user_own
+                FROM Project
+            WHERE user_own IS NOT NULL
+              AND JSON_SEARCH(user_own, 'one', :userId, NULL, '\$[*].userID') IS NOT NULL
             ORDER BY project_name
-        ');
+        ");
         $stmt->execute([':userId' => $userId]);
 
         return array_map([$this, 'mapRowToProject'], $stmt->fetchAll());
@@ -89,18 +90,16 @@ final class MySQLProjectRepository implements ProjectRepositoryInterface
     public function save(Project $project): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO Project (id, project_name, user_own, acept_login)
-            VALUES (:id, :name, :own, :acept)
+            INSERT INTO Project (id, project_name, user_own)
+            VALUES (:id, :name, :own)
             ON DUPLICATE KEY UPDATE
                 project_name = VALUES(project_name),
-                user_own     = VALUES(user_own),
-                acept_login  = VALUES(acept_login)
+                user_own     = VALUES(user_own)
         ');
         $stmt->execute([
             ':id'    => $project->projectId(),
             ':name'  => $project->projectName(),
-            ':own'   => $project->userOwnId(),
-            ':acept' => (int) $project->aceptLogin(),
+            ':own'   => $project->userOwnJson(),
         ]);
     }
 
@@ -129,8 +128,15 @@ final class MySQLProjectRepository implements ProjectRepositoryInterface
      */
     public function unassignProjectsByUserId(string $userId): void
     {
-        $stmt = $this->pdo->prepare('UPDATE Project SET user_own = NULL WHERE user_own = :userId');
-        $stmt->execute([':userId' => $userId]);
+        // Eliminar usuario del JSON user_own donde aparezca
+        $stmt = $this->pdo->prepare("
+            UPDATE Project
+            SET user_own = JSON_REMOVE(user_own, 
+                JSON_UNQUOTE(JSON_SEARCH(user_own, 'one', :userId, NULL, '\$[*].userID'))
+            )
+            WHERE JSON_CONTAINS(user_own, JSON_QUOTE(:userId2), '\$[*].userID')
+        ");
+        $stmt->execute([':userId' => $userId, ':userId2' => $userId]);
     }
 
     /**
@@ -145,7 +151,6 @@ final class MySQLProjectRepository implements ProjectRepositoryInterface
             $row['id'],
             $row['project_name'],
             $row['user_own'] ?: null,
-            (bool) $row['acept_login'],
         );
     }
 }

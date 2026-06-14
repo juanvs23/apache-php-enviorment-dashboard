@@ -104,7 +104,7 @@ final class LegacyReaderTest extends TestCase
         if (!empty($projects)) {
             self::assertArrayHasKey('id', $projects[0]);
             self::assertArrayHasKey('project_name', $projects[0]);
-            self::assertArrayHasKey('acept_login', $projects[0]);
+            self::assertArrayHasKey('user_own', $projects[0]);
         }
     }
 

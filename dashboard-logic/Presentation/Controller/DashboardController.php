@@ -69,27 +69,24 @@ final class DashboardController
         unset($p);
 
         // ─── Enriquecer con datos de la DB ───────────────────────
+        $userId = $authUser ? ($authUser['userID'] ?? null) : null;
+        $isAdminOrOp = $authUser && $this->checkPermission->execute($userId, 'projects.acept_login');
+
         try {
             $dbProjects = $this->listProjects->all();
-            $acceptMap  = [];
+            $loginMap = [];
             foreach ($dbProjects as $dbp) {
-                $acceptMap[\strtolower($dbp->projectName())] = $dbp->aceptLogin() ? 1 : 0;
+                $loginMap[\strtolower($dbp->projectName())] = $dbp->isLogeableForUser($userId ?? '');
             }
 
             foreach ($projects as &$p) {
-                $p['acept_login'] = $acceptMap[\strtolower($p['dir'])] ?? 0;
+                $p['acept_login'] = $isAdminOrOp
+                    ? 1
+                    : (int) ($loginMap[\strtolower($p['dir'])] ?? false);
             }
             unset($p);
-
-            // Admin ve TODOS los botones siempre
-            if ($authUser && $this->checkPermission->execute($authUser['userID'], 'projects.acept_login')) {
-                foreach ($projects as &$p) {
-                    $p['acept_login'] = 1;
-                }
-                unset($p);
-            }
         } catch (\Throwable) {
-            // Si falla la DB, asumir acept_login = 0
+            // Sin DB, sin login
         }
 
         // ─── Filtrar para usuarios no-admin ──────────────────────

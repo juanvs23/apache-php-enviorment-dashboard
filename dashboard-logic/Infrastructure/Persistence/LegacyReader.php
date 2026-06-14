@@ -62,13 +62,28 @@ final class LegacyReader
     public function getAllProjects(): array
     {
         try {
-            return Connection::get()->query('
-                SELECT p.id, p.project_name, p.user_own, p.acept_login,
-                       u.email AS user_email, u.name AS user_name
+            $projects = Connection::get()->query('
+                SELECT p.id, p.project_name, p.user_own
                 FROM Project p
-                LEFT JOIN USERS u ON u.userID = p.user_own
                 ORDER BY p.project_name
             ')->fetchAll();
+
+            foreach ($projects as &$p) {
+                $users = $p['user_own'] ? json_decode($p['user_own'], true) : [];
+                $p['user_count'] = count($users);
+                if ($users) {
+                    $first = $users[0];
+                    $display = $first['user_name'] ?? $first['userID'];
+                    $p['user_email'] = $display . ($p['user_count'] > 1 ? " +{$p['user_count']}" : '');
+                    $p['user_name'] = $first['user_name'] ?? null;
+                } else {
+                    $p['user_email'] = null;
+                    $p['user_name'] = null;
+                }
+            }
+            unset($p);
+
+            return $projects;
         } catch (\Throwable) {
             return [];
         }
