@@ -2,15 +2,23 @@
 -- Migración 004: Actualización desde v1.1.0 → v1.5.0
 -- ============================================================================
 -- Aplica todos los cambios necesarios para instalaciones existentes.
--- Seguro para ejecutar múltiples veces (usa IF NOT EXISTS / IF EXISTS).
+-- Compatible con MySQL 8.0 (usa INFORMATION_SCHEMA para chequeos).
 -- ============================================================================
 
 -- 1. Convertir user_own de CHAR(36) a JSON ──────────────────────────────────
 --    Migrar datos existentes: cada user_own → [{"userID": uuid, "user_name": "", "is_logeable": acept_login}]
 
--- Agregar columna temporal JSON
-ALTER TABLE `Project`
-  ADD COLUMN IF NOT EXISTS `user_own_json` JSON DEFAULT NULL AFTER `user_own`;
+-- Agregar columna temporal JSON (solo si no existe)
+SET @has_user_own_json = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Project' AND COLUMN_NAME = 'user_own_json');
+
+SET @sql_add_col = IF(@has_user_own_json = 0,
+    'ALTER TABLE `Project` ADD COLUMN `user_own_json` JSON DEFAULT NULL AFTER `user_own`',
+    'SELECT 1');
+
+PREPARE stmt FROM @sql_add_col;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Migrar datos existentes
 UPDATE `Project`
@@ -23,14 +31,68 @@ SET `user_own_json` = JSON_ARRAY(
 )
 WHERE `user_own` IS NOT NULL AND `user_own_json` IS NULL;
 
--- Eliminar FK y columna vieja
-ALTER TABLE `Project` DROP FOREIGN KEY IF EXISTS `fk_project_user`;
-ALTER TABLE `Project` DROP KEY IF EXISTS `fk_project_user`;
-ALTER TABLE `Project` DROP COLUMN IF EXISTS `user_own`;
-ALTER TABLE `Project` DROP COLUMN IF EXISTS `acept_login`;
+-- Eliminar FK (solo si existe)
+SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Project' AND CONSTRAINT_NAME = 'fk_project_user' AND CONSTRAINT_TYPE = 'FOREIGN KEY');
 
--- Renombrar nueva columna
-ALTER TABLE `Project` CHANGE COLUMN `user_own_json` `user_own` JSON DEFAULT NULL;
+SET @sql_drop_fk = IF(@fk_exists > 0,
+    'ALTER TABLE `Project` DROP FOREIGN KEY `fk_project_user`',
+    'SELECT 1');
+
+PREPARE stmt FROM @sql_drop_fk;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Eliminar índice (solo si existe)
+SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Project' AND INDEX_NAME = 'fk_project_user');
+
+SET @sql_drop_idx = IF(@idx_exists > 0,
+    'ALTER TABLE `Project` DROP INDEX `fk_project_user`',
+    'SELECT 1');
+
+PREPARE stmt FROM @sql_drop_idx;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Eliminar columna user_own (solo si existe)
+SET @has_user_own = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Project' AND COLUMN_NAME = 'user_own' AND DATA_TYPE != 'json');
+
+SET @sql_drop_own = IF(@has_user_own > 0,
+    'ALTER TABLE `Project` DROP COLUMN `user_own`',
+    'SELECT 1');
+
+PREPARE stmt FROM @sql_drop_own;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Eliminar columna acept_login (solo si existe)
+SET @has_acept = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Project' AND COLUMN_NAME = 'acept_login');
+
+SET @sql_drop_acept = IF(@has_acept > 0,
+    'ALTER TABLE `Project` DROP COLUMN `acept_login`',
+    'SELECT 1');
+
+PREPARE stmt FROM @sql_drop_acept;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Renombrar nueva columna (solo si user_own_json existe y user_own no es JSON todavía)
+SET @has_json_col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Project' AND COLUMN_NAME = 'user_own_json');
+
+SET @user_own_is_json = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Project' AND COLUMN_NAME = 'user_own' AND DATA_TYPE = 'json');
+
+SET @sql_rename = IF(@has_json_col > 0 AND @user_own_is_json = 0,
+    'ALTER TABLE `Project` CHANGE COLUMN `user_own_json` `user_own` JSON DEFAULT NULL',
+    'SELECT 1');
+
+PREPARE stmt FROM @sql_rename;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- 2. Tablas nuevas ──────────────────────────────────────────────────────────
 
