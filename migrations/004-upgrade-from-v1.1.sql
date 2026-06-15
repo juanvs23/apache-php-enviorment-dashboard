@@ -127,17 +127,17 @@ WHERE `levelID` = @client_level AND `perm_id` = @acept_perm;
 
 UPDATE `Project` p
 SET `user_own` = (
-    SELECT JSON_ARRAYAGG(
-        JSON_OBJECT(
-            'userID', u2.`userID`,
-            'user_name', COALESCE(u2.`name`, u2.`email`),
-            'is_logeable', CAST(JSON_EXTRACT(u2.entry, '$.is_logeable') AS UNSIGNED)
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'userID', u2.`userID`,
+                'user_name', COALESCE(u2real.`name`, u2real.`email`),
+                'is_logeable', CAST(JSON_EXTRACT(u2.entry, '$.is_logeable') AS UNSIGNED)
+            )
         )
-    )
-    FROM JSON_TABLE(p.`user_own`, '$[*]' COLUMNS(
-        `userID` CHAR(36) PATH '$.userID',
-        entry JSON PATH '$'
-    )) AS u2
-    JOIN `USERS` u2real ON u2real.`userID` = u2.`userID`
+        FROM JSON_TABLE(p.`user_own`, '$[*]' COLUMNS(
+            `userID` CHAR(36) PATH '$.userID',
+            entry JSON PATH '$'
+        )) AS u2
+        JOIN `USERS` u2real ON u2real.`userID` = u2.`userID`
 )
 WHERE p.`user_own` IS NOT NULL;
